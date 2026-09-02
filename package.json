@@ -1,0 +1,31 @@
+{
+  "name": "thyatira-team-protected",
+  "version": "1.0.0",
+  "description": "Optional Electron wrapper for the Thyatira Team website, adding Windows-level content protection while a video is playing.",
+  "main": "main.js",
+  "author": "Thyatira Team",
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "start:remote": "cross-env THYATIRA_URL=https://your-deployed-site.example.com electron .",
+    "dist:win": "electron-builder --win"
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3",
+    "electron": "^32.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.thyatirateam.protected",
+    "productName": "Thyatira Team",
+    "files": [
+      "main.js",
+      "preload.js",
+      "package.json"
+    ],
+    "win": {
+      "target": ["nsis"]
+    }
+  }
+}
