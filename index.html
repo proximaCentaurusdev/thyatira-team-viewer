@@ -684,7 +684,6 @@
     position:relative;
     height:340px;
     overflow:hidden;
-    border:1px solid var(--dark-brown);
     background:
       radial-gradient(circle at 30% 70%, rgba(165,64,15,.18), transparent 55%),
       linear-gradient(150deg, var(--deep-burgundy), var(--black) 70%);
@@ -696,12 +695,6 @@
     height:100%;
     object-fit:cover;
     display:block;
-  }
-  .about-frame::after{
-    content:'';
-    position:absolute; inset:16px;
-    border:1px solid rgba(184,111,50,.4);
-    pointer-events:none;
   }
   .about-copy p{ opacity:.72; margin-bottom:18px; max-width:520px; }
   .about-copy .signature{
