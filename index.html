@@ -1157,11 +1157,20 @@
   // Anonymous auth just gives Firestore Rules a stable request.auth.uid to
   // key sessions on — visitors never see a sign-in screen or enter any
   // credentials. Works on the free Spark plan (unlike Cloud Functions).
-  var authReadyPromise = new Promise(function(resolve){
+  var authReadyPromise = new Promise(function(resolve, reject){
+    var settled = false;
     var unsub = auth.onAuthStateChanged(function(user){
-      if(user){ unsub(); resolve(user); }
+      if(user && !settled){ settled = true; unsub(); resolve(user); }
     });
-    auth.signInAnonymously().catch(function(err){ console.error("Anonymous sign-in failed:", err); });
+    auth.signInAnonymously().catch(function(err){
+      // BUGFIX: previously this only logged the error and left the promise
+      // pending forever. If anonymous auth is disabled in the Firebase
+      // console (or blocked/offline), verifyCode() would call ensureAuth()
+      // and just hang — spinner stuck on the Verify button, no message ever
+      // shown. Now we reject so the caller's .catch() actually fires.
+      console.error("Anonymous sign-in failed:", err);
+      if(!settled){ settled = true; unsub(); reject(err); }
+    });
   });
   function ensureAuth(){ return authReadyPromise; }
 
@@ -1273,34 +1282,62 @@
     }
   }
 
+  /* BUGFIX: this used to be a one-time .get() — so if the admin published a
+     season or added/published a production in the dashboard *after* this
+     page had already loaded, a visitor sitting on the page would never see
+     it (and even a refresh only helped if the write had actually gone
+     through with status "published"/"soon"). These are now live
+     onSnapshot() listeners, same pattern as dashboard.html, so the season
+     grid and an already-open season view update immediately when data
+     changes — no refresh needed, and it's now obvious whether a newly
+     added course/season is actually live vs. still sitting as "draft". */
+  var seasonsLoaded = false;
+  var productionsLoaded = false;
+  var currentOpenSeasonId = null;
+
+  function showSeasonsLoadError(err){
+    console.error(err);
+    var grid = qs("#seasonGrid");
+    grid.innerHTML = "";
+    var empty = document.createElement("div");
+    empty.className = "empty-state error";
+    empty.innerHTML = "<h4>Something went wrong.</h4><p>Please try again in a moment.</p>";
+    grid.appendChild(empty);
+  }
+
+  function onSeasonsOrProductionsChanged(){
+    if (!seasonsLoaded || !productionsLoaded) return; // wait for both first loads
+    renderSeasons();
+    if (currentOpenSeasonId){
+      var openSeason = seasonById(currentOpenSeasonId);
+      if (openSeason) renderSeasonView(openSeason);
+    }
+  }
+
   function fetchSeasons(){
     renderSeasonSkeletons(3);
-    return db.collection("seasons")
+
+    db.collection("seasons")
       .where("status", "in", ["published", "soon"])
       .orderBy("number")
-      .get()
-      .then(function(snap){
+      .onSnapshot(function(snap){
         seasons = snap.docs.map(function(d){ return Object.assign({ id: d.id }, d.data()); });
-        return db.collection("productions").where("status", "==", "published").get();
-      })
-      .then(function(prodSnap){
+        seasonsLoaded = true;
+        onSeasonsOrProductionsChanged();
+      }, function(err){ showSeasonsLoadError(err); });
+
+    db.collection("productions")
+      .where("status", "==", "published")
+      .onSnapshot(function(prodSnap){
         productionsBySeason = {};
         prodSnap.docs.forEach(function(d){
           var p = Object.assign({ id: d.id }, d.data());
           if (!productionsBySeason[p.seasonId]) productionsBySeason[p.seasonId] = [];
           productionsBySeason[p.seasonId].push(p);
         });
-        renderSeasons();
-      })
-      .catch(function(err){
-        console.error(err);
-        var grid = qs("#seasonGrid");
-        grid.innerHTML = "";
-        var empty = document.createElement("div");
-        empty.className = "empty-state error";
-        empty.innerHTML = "<h4>Something went wrong.</h4><p>Please try again in a moment.</p>";
-        grid.appendChild(empty);
-      });
+        productionsLoaded = true;
+        onSeasonsOrProductionsChanged();
+      }, function(err){ showSeasonsLoadError(err); });
   }
 
   /* ===================== RENDER SEASONS ===================== */
@@ -1465,14 +1502,16 @@
     if (!cached) return;
 
     // Everything needed to render this season is already sitting in
-    // `seasons` / `productionsBySeason` from fetchSeasons() — no extra
-    // network round-trip needed just to open it.
+    // `seasons` / `productionsBySeason` from fetchSeasons()'s live
+    // listeners — no extra network round-trip needed just to open it.
+    currentOpenSeasonId = id;
     renderSeasonView(cached);
     seasonViewSection.classList.add("open");
     seasonViewSection.scrollIntoView({ behavior:"smooth", block:"start" });
   }
 
   qs("#backToSeasons").addEventListener("click", function(){
+    currentOpenSeasonId = null;
     seasonViewSection.classList.remove("open");
     qs("#seasons").scrollIntoView({ behavior:"smooth", block:"start" });
   });
@@ -1509,6 +1548,7 @@
     revoked:        "This code is no longer active.",
     limit_reached:  "This code has reached its usage limit.",
     device_limit:   "This code is already in use on the maximum number of devices.",
+    auth_error:     "Couldn't connect right now. Check your connection and try again.",
     error:          "Something went wrong. Please try again."
   };
 
@@ -1539,6 +1579,10 @@
     var codeRef;
 
     ensureAuth()
+      .catch(function(err){
+        console.error("Auth not ready:", err);
+        throw { status: "auth_error" };
+      })
       .then(function(user){
         codeRef = db.collection("codes").doc(raw);
         return db.runTransaction(function(tx){
