@@ -1556,6 +1556,7 @@
     limit_reached:  "This code has reached its usage limit.",
     device_limit:   "This code is already in use on the maximum number of devices.",
     auth_error:     "Couldn't connect right now. Check your connection and try again.",
+    permission_denied: "Access was denied by the server rules for this code. This is a setup issue, not your code — contact the admin.",
     error:          "Something went wrong. Please try again."
   };
 
@@ -1644,7 +1645,15 @@
       })
       .catch(function(err){
         var status = (err && err.status) || "error";
-        if (status === "error") console.error(err);
+        if (status === "error"){
+          // DIAGNOSTIC: if this is a raw Firestore error (not one of our
+          // own thrown {status:...} objects), err.code tells us exactly
+          // why — most importantly "permission-denied", which means
+          // firestore.rules is blocking the read/write, not that the code
+          // itself is wrong. Check the browser console for this line.
+          console.error("verifyCode failed — Firestore code:", err && err.code, err);
+          if (err && err.code === "permission-denied") status = "permission_denied";
+        }
         accessMsg.textContent = ACCESS_STATUS_MESSAGES[status] || ACCESS_STATUS_MESSAGES.invalid;
         accessMsg.className = "form-msg error";
       })
@@ -1719,8 +1728,17 @@
         watermarkTimer = setInterval(moveWatermark, 6000);
       })
       .catch(function(err){
-        console.error(err);
-        playerEmpty.textContent = "This production is currently unavailable. Please try again shortly.";
+        // DIAGNOSTIC: same idea as verifyCode — log the real Firestore
+        // error code. "permission-denied" here means firestore.rules is
+        // rejecting the read of the private media doc (usually because it
+        // can't confirm a valid session for this viewer + season), not
+        // that anything is wrong with the production itself.
+        console.error("openVideo failed — Firestore code:", err && err.code, err);
+        if (err && err.code === "permission-denied"){
+          playerEmpty.textContent = "Access to this video was denied. Try re-entering your access code, or contact the admin if this keeps happening.";
+        } else {
+          playerEmpty.textContent = "This production is currently unavailable. Please try again shortly.";
+        }
         showToast("Couldn't open this video. Try re-entering your access code.", "error");
       });
   }
