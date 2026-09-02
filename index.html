@@ -1212,7 +1212,7 @@
     <div class="drive-frame-empty" id="playerEmpty">Loading video…</div>
     <iframe id="playerFrame" class="drive-frame" title="Video player" allow="autoplay; fullscreen" allowfullscreen frameborder="0" referrerpolicy="no-referrer" style="display:none;"></iframe>
     <div class="watermark" id="watermark">
-      Thyatira Team<br><span class="wm-viewer" id="watermarkViewer">Viewer: ————</span><br><span class="wm-session" id="watermarkSession"></span>
+      Thyatira Team<br><span class="wm-viewer" id="watermarkViewer">Viewer: ————</span><br><span class="wm-session" id="watermarkSession"></span><br><span class="wm-session" id="watermarkClock"></span>
     </div>
     <div class="capture-shield" id="captureShield" data-i18n="capture_shield_msg">Playback paused — this window isn't focused.</div>
   </div>
@@ -1976,6 +1976,7 @@
   var playerEmpty = qs("#playerEmpty");
   var watermarkEl = qs("#watermark");
   var watermarkTimer = null;
+  var watermarkClockTimer = null;
 
   /* ===================== CAPTURE DETERRENCE =====================
      Blacks out the video the instant this tab/window loses focus or is
@@ -1997,6 +1998,7 @@
      guarantee against phone screen recording. */
   var captureShield = qs("#captureShield");
   var captureCheckTimer = null;
+  var devtoolsOpen = false;
 
   function shieldVideo(){
     if(!securitySettings.captureDeterrence) return;
@@ -2004,6 +2006,7 @@
     captureShield.classList.add("show");
   }
   function unshieldVideo(){
+    if(devtoolsOpen) return; // stay shielded until devtools actually closes
     captureShield.classList.remove("show");
   }
   document.addEventListener("visibilitychange", function(){
@@ -2011,18 +2014,51 @@
   });
   window.addEventListener("blur", shieldVideo);
   window.addEventListener("focus", unshieldVideo);
+
+  /* DevTools open detector (desktop browsers only): once the panel is
+     docked, the browser's outer chrome grows relative to the viewport by
+     a lot more than any normal toolbar/zoom does. Not foolproof — someone
+     can undock devtools to a separate window and this won't see it — but
+     it catches the common case of someone opening the console to poke at
+     the page or grab the raw Drive iframe URL. */
+  function checkDevtools(){
+    var widthGap = window.outerWidth - window.innerWidth;
+    var heightGap = window.outerHeight - window.innerHeight;
+    devtoolsOpen = widthGap > 160 || heightGap > 160;
+    if(devtoolsOpen) shieldVideo(); else if(document.hasFocus() && !document.hidden) unshieldVideo();
+  }
+
   // Fallback poll — some mobile browsers don't fire blur/visibilitychange
-  // reliably when a system overlay (share sheet, app switcher) appears.
+  // reliably when a system overlay (share sheet, app switcher) appears,
+  // and devtools detection needs polling regardless.
   function startCaptureCheck(){
     stopCaptureCheck();
     captureCheckTimer = setInterval(function(){
-      if(!document.hasFocus() || document.hidden) shieldVideo(); else unshieldVideo();
+      checkDevtools();
+      if(!document.hasFocus() || document.hidden) shieldVideo();
     }, 1000);
   }
   function stopCaptureCheck(){
     clearInterval(captureCheckTimer);
     captureCheckTimer = null;
+    devtoolsOpen = false;
   }
+
+  /* Best-effort screenshot-key interception (desktop only). The OS has
+     usually already captured the frame by the time this fires — a
+     webpage cannot truly block a system-level screenshot — so this is
+     "notice and shame", not prevention: it blanks the video immediately
+     after and logs the attempt, which is enough to make a screenshot
+     mostly useless (black frame) and puts the viewer on notice. */
+  document.addEventListener("keyup", function(e){
+    var isPrintScreen = e.key === "PrintScreen";
+    var isMacShot = e.metaKey && e.shiftKey && ["3","4","5"].indexOf(e.key) !== -1;
+    var isWinSnip = e.key === "S" && e.shiftKey && (e.metaKey || e.getModifierState && e.getModifierState("Meta"));
+    if(isPrintScreen || isMacShot || isWinSnip){
+      shieldVideo();
+      showToast(t("capture_shield_msg"), "error");
+    }
+  });
 
   function applySecuritySettings(){
     if(!securitySettings.captureDeterrence) unshieldVideo();
@@ -2030,11 +2066,18 @@
 
   qs("#watermarkViewer").textContent = t("watermark_viewer_prefix") + (viewerLabel || "————");
 
+  /* The watermark now also burns in a live HH:MM:SS timestamp. This
+     doesn't stop a capture — nothing client-side can — but it means any
+     recording that does happen carries the viewer's name and the exact
+     moment it was made, right in frame, which is a real deterrent on its
+     own and gives the admin something to trace a leak back to. */
+  var watermarkClockEl = qs("#watermarkClock");
   function moveWatermark(){
     var top = 8 + Math.random()*70;
     var left = 5 + Math.random()*70;
     watermarkEl.style.top = top + "%";
     watermarkEl.style.left = left + "%";
+    if(watermarkClockEl) watermarkClockEl.textContent = new Date().toLocaleTimeString();
   }
 
   function openVideo(season, production){
@@ -2077,6 +2120,10 @@
         moveWatermark();
         clearInterval(watermarkTimer);
         watermarkTimer = setInterval(moveWatermark, 6000);
+        clearInterval(watermarkClockTimer);
+        watermarkClockTimer = setInterval(function(){
+          if(watermarkClockEl) watermarkClockEl.textContent = new Date().toLocaleTimeString();
+        }, 1000);
       })
       .catch(function(err){
         // DIAGNOSTIC: same idea as verifyCode — log the real Firestore
@@ -2100,6 +2147,7 @@
     videoOverlay.classList.remove("open");
     document.body.style.overflow = "";
     clearInterval(watermarkTimer);
+    clearInterval(watermarkClockTimer);
     stopCaptureCheck();
     unshieldVideo();
   }
