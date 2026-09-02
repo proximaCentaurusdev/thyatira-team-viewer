@@ -928,6 +928,24 @@
   .watermark .wm-viewer{ font-size:.72rem; opacity:.85; }
   .watermark .wm-session{ font-size:.66rem; opacity:.7; letter-spacing:.05em; }
 
+  /* Capture deterrence: blacks out the video whenever this tab/window
+     loses focus or is hidden (app-switch, another window/overlay taking
+     focus, etc). See the JS section for what this can and can't catch. */
+  .capture-shield{
+    position:absolute; inset:0;
+    background:#000;
+    z-index:60;
+    display:none;
+    align-items:center; justify-content:center;
+    text-align:center;
+    padding:24px;
+    color:rgba(236,193,139,.75);
+    font-family:var(--font-body);
+    font-size:.85rem;
+    line-height:1.5;
+  }
+  .capture-shield.show{ display:flex; }
+
   .player-controls{
     display:flex;
     align-items:center;
@@ -1196,6 +1214,7 @@
     <div class="watermark" id="watermark">
       Thyatira Team<br><span class="wm-viewer" id="watermarkViewer">Viewer: ————</span><br><span class="wm-session" id="watermarkSession"></span>
     </div>
+    <div class="capture-shield" id="captureShield" data-i18n="capture_shield_msg">Playback paused — this window isn't focused.</div>
   </div>
   <div class="video-info">
     <span class="season-tag" id="videoSeasonTag"></span>
@@ -1299,6 +1318,19 @@
   var viewerLabel = null;
   var securitySettings = { watermark:true, captureDeterrence:true, antiRightClick:true };
 
+  /* Pull the admin's real toggles from settings/security (written by the
+     dashboard's Security page). Falls back to the defaults above if the
+     doc doesn't exist yet or the read is blocked — so the site still works
+     even before that document has been created. */
+  db.collection("settings").doc("security").get().then(function(doc){
+    if(!doc.exists) return;
+    var d = doc.data();
+    if(typeof d.watermark === "boolean") securitySettings.watermark = d.watermark;
+    if(typeof d.captureDeterrence === "boolean") securitySettings.captureDeterrence = d.captureDeterrence;
+    if(typeof d.antiRightClick === "boolean") securitySettings.antiRightClick = d.antiRightClick;
+    applySecuritySettings();
+  }).catch(function(err){ console.error("Couldn't load security settings:", err && err.code, err); });
+
   /* ===================== UTIL ===================== */
   function qs(sel, ctx){ return (ctx||document).querySelector(sel); }
   function qsa(sel, ctx){ return Array.prototype.slice.call((ctx||document).querySelectorAll(sel)); }
@@ -1373,6 +1405,7 @@
       video_denied:"Access to this video was denied. Try re-entering your access code, or contact the admin if this keeps happening.",
       video_error:"This production is currently unavailable. Please try again shortly.",
       video_runtime:"Runtime: ",
+      capture_shield_msg:"Playback paused — this window isn't focused.",
       watermark_viewer_prefix:"Viewer: ", watermark_session_prefix:"Session: ",
       toast_season_unlocked_suffix:" — Season ", toast_video_open_failed:"Couldn't open this video. Try re-entering your access code.",
       status_msg_invalid:"That code isn't recognized. Double-check and try again.",
@@ -1430,6 +1463,7 @@
       video_denied:"تم رفض الوصول لهذا الفيديو. حاول إعادة إدخال كود الدخول، أو تواصل مع الإدارة إذا تكررت المشكلة.",
       video_error:"هذا العرض غير متاح حاليًا. برجاء المحاولة مرة أخرى بعد قليل.",
       video_runtime:"المدة: ",
+      capture_shield_msg:"تم إيقاف التشغيل مؤقتًا — هذه النافذة غير نشطة حاليًا.",
       watermark_viewer_prefix:"المشاهد: ", watermark_session_prefix:"الجلسة: ",
       toast_season_unlocked_suffix:" — الموسم ", toast_video_open_failed:"تعذّر فتح هذا الفيديو. حاول إعادة إدخال كود الدخول.",
       status_msg_invalid:"هذا الكود غير معروف. تأكد منه وحاول مرة أخرى.",
@@ -1943,6 +1977,57 @@
   var watermarkEl = qs("#watermark");
   var watermarkTimer = null;
 
+  /* ===================== CAPTURE DETERRENCE =====================
+     Blacks out the video the instant this tab/window loses focus or is
+     hidden — covering things like alt-tabbing to a separate recorder/
+     capture-card app, another window grabbing focus, or a browser
+     screen-share picker. It's driven by the admin's "Screen Capture
+     Deterrence" toggle in the dashboard (see securitySettings above).
+
+     IMPORTANT LIMITATION, honestly stated: this can NOT detect a phone's
+     built-in screen recorder (iOS Control Center / Android Quick
+     Settings) or most desktop OS-level recorders. Those record the
+     screen without the browser ever losing focus or visibility, and
+     there is no web API that exposes "the OS is recording this screen"
+     to a page — no site can see that state. The only real protection
+     against that is DRM (e.g. Widevine L1) enforced by the OS/browser
+     video pipeline itself, which requires a licensed DRM streaming
+     backend and isn't compatible with a plain Google Drive iframe embed.
+     This feature is a genuine deterrent for casual window-capture, not a
+     guarantee against phone screen recording. */
+  var captureShield = qs("#captureShield");
+  var captureCheckTimer = null;
+
+  function shieldVideo(){
+    if(!securitySettings.captureDeterrence) return;
+    if(!videoOverlay.classList.contains("open")) return;
+    captureShield.classList.add("show");
+  }
+  function unshieldVideo(){
+    captureShield.classList.remove("show");
+  }
+  document.addEventListener("visibilitychange", function(){
+    if(document.hidden) shieldVideo(); else unshieldVideo();
+  });
+  window.addEventListener("blur", shieldVideo);
+  window.addEventListener("focus", unshieldVideo);
+  // Fallback poll — some mobile browsers don't fire blur/visibilitychange
+  // reliably when a system overlay (share sheet, app switcher) appears.
+  function startCaptureCheck(){
+    stopCaptureCheck();
+    captureCheckTimer = setInterval(function(){
+      if(!document.hasFocus() || document.hidden) shieldVideo(); else unshieldVideo();
+    }, 1000);
+  }
+  function stopCaptureCheck(){
+    clearInterval(captureCheckTimer);
+    captureCheckTimer = null;
+  }
+
+  function applySecuritySettings(){
+    if(!securitySettings.captureDeterrence) unshieldVideo();
+  }
+
   qs("#watermarkViewer").textContent = t("watermark_viewer_prefix") + (viewerLabel || "————");
 
   function moveWatermark(){
@@ -1953,6 +2038,8 @@
   }
 
   function openVideo(season, production){
+    unshieldVideo();
+    startCaptureCheck();
     qs("#videoSeasonTag").textContent = t("season_word") + " " + season.number + " — " + season.name;
     qs("#videoTitle").textContent = production.title;
     qs("#videoDesc").textContent = production.desc || "";
@@ -2013,6 +2100,8 @@
     videoOverlay.classList.remove("open");
     document.body.style.overflow = "";
     clearInterval(watermarkTimer);
+    stopCaptureCheck();
+    unshieldVideo();
   }
   qs("#closeVideo").addEventListener("click", closeVideo);
 
