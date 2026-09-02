@@ -92,6 +92,32 @@
   button{ font-family:inherit; cursor:pointer; }
   ::selection{ background:var(--dark-red); color:var(--light-gold); }
 
+  /* ===================== ANTI-COPY / ANTI-CHEAT (best effort) =====================
+     Disables text selection and iOS's long-press "Save Image / Copy" callout
+     menu site-wide. This is the mobile equivalent of the desktop right-click
+     block below in the JS: Android's browsers fire a real "contextmenu" DOM
+     event on long-press (so the existing contextmenu listener already
+     handles them), but iOS Safari never fires that event for a long-press —
+     it shows its own native callout instead, which only
+     -webkit-touch-callout:none can suppress. Inputs/textareas are excluded
+     so visitors can still select and edit what they type into the access
+     code / name fields. */
+  html, body{
+    -webkit-touch-callout:none;
+    -webkit-user-select:none;
+    -khtml-user-select:none;
+    -moz-user-select:none;
+    -ms-user-select:none;
+    user-select:none;
+  }
+  input, textarea, [contenteditable="true"]{
+    -webkit-touch-callout:default;
+    -webkit-user-select:text;
+    -moz-user-select:text;
+    -ms-user-select:text;
+    user-select:text;
+  }
+
   /* ---- Arabic language mode -----------------------------------------
      Applied on <body> when the visitor picks "ع". Deliberately does NOT
      flip the whole page to a mirrored RTL layout (that would need a
@@ -2632,13 +2658,57 @@
     }
   });
 
-  /* ===================== SECURITY UI (deterrence only, not real security) ===================== */
+  /* ===================== SECURITY UI (deterrence only, not real security) =====================
+     Desktop: right-click, drag, Ctrl/Cmd+S, Ctrl/Cmd+U, F12, DevTools
+     shortcuts, Ctrl/Cmd+M, and (best-effort only, see note below) the
+     Windows/Command key are all intercepted site-wide, not just inside
+     the video viewer.
+     Mobile: the same right-click block also catches Android's long-press
+     (Android fires a real "contextmenu" DOM event for it); iOS's
+     long-press "Save Image/Copy" callout is separately blocked by the
+     -webkit-touch-callout CSS rule near the top of this file, since iOS
+     never fires a contextmenu event for it. Text selection and pinch-zoom
+     are also blocked below, since both make it easier to grab a still
+     frame or read overlapping UI. */
   document.addEventListener("contextmenu", function(e){ e.preventDefault(); });
   document.addEventListener("dragstart", function(e){ e.preventDefault(); });
+
+  // Extra layer on top of the CSS user-select:none rule — some mobile
+  // browsers start a text selection on long-press before/without ever
+  // firing contextmenu. Inputs/textareas are excluded so the access-code
+  // and name fields keep working normally.
+  document.addEventListener("selectstart", function(e){
+    var tag = (e.target && e.target.tagName || "").toLowerCase();
+    if (tag !== "input" && tag !== "textarea") e.preventDefault();
+  });
+
+  // Mobile: block two-finger pinch-zoom gestures site-wide. { passive:false }
+  // is required for preventDefault() to actually have an effect on touchmove.
+  document.addEventListener("touchmove", function(e){
+    if (e.touches && e.touches.length > 1) e.preventDefault();
+  }, { passive:false });
+
   document.addEventListener("keydown", function(e){
     var key = (e.key || "").toLowerCase();
+    var code = (e.code || "").toLowerCase();
     var ctrlOrCmd = e.ctrlKey || e.metaKey;
-    if (ctrlOrCmd && key === "s"){ e.preventDefault(); showToast("Saving is disabled on this page."); }
+
+    // Windows key (Windows) / Command key (Mac), pressed alone.
+    // HONEST LIMITATION — please read before relying on this: no webpage,
+    // on any browser, can actually stop the Windows key from opening the
+    // Start Menu, or a Mac's Cmd-driven OS shortcuts. That key is handled
+    // by the operating system itself, generally before the browser ever
+    // gets a chance to see it, and even on the rare browser/OS
+    // combination that does forward a keydown event for it,
+    // preventDefault() has no effect on a global OS-level hotkey. This
+    // line only catches that rare forwarded event — it is deterrence for
+    // an edge case, not a real block, and nothing in JavaScript can make
+    // it one.
+    var isWindowsKey = key === "meta" || key === "os" || code.indexOf("meta") === 0 || code.indexOf("os") === 0;
+    if (isWindowsKey){ e.preventDefault(); return; }
+
+    if (ctrlOrCmd && key === "m"){ e.preventDefault(); showToast("This shortcut is disabled on this page."); }
+    else if (ctrlOrCmd && key === "s"){ e.preventDefault(); showToast("Saving is disabled on this page."); }
     else if (ctrlOrCmd && key === "u"){ e.preventDefault(); showToast("Viewing source is disabled on this page."); }
     else if (key === "f12"){ e.preventDefault(); showToast("Developer tools are disabled on this page."); }
     else if (ctrlOrCmd && e.shiftKey && (key === "i" || key === "j" || key === "c")){
@@ -2647,7 +2717,12 @@
   });
   // Note: this is best-effort frontend deterrence only. It does not provide
   // real protection — actual access control and content security will be
-  // implemented on the server in a later phase.
+  // implemented on the server in a later phase. Two things it flatly
+  // cannot do, on any platform, because no web page has an API for either:
+  // stop a native OS screenshot/screen recording (Snipping Tool/Game Bar
+  // on Windows, Cmd+Shift+3/4 or QuickTime on Mac, Control Center on iOS,
+  // Quick Settings on Android), or truly prevent the Windows/Cmd key from
+  // opening the OS's own menu.
 
   /* ===================== INIT ===================== */
   qs("#year").textContent = new Date().getFullYear();
