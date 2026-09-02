@@ -5,9 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Thyatira Team — Experience the Stage Beyond the Stage</title>
 <meta name="description" content="A premium digital space for experiencing Thyatira Team theatrical productions.">
+<!-- Favicon / mobile "Add to Home Screen" icon.
+     Uses the same thyatira.jpeg file as the About section — upload it to
+     the SAME folder as this index.html on your host (it isn't bundled
+     with this file). Most browsers accept a .jpeg favicon directly; if
+     you want the sharpest possible result, a square 512x512 PNG named
+     e.g. thyatira-icon.png works even better — just update the three
+     references below (and in manifest.json) to that filename instead. -->
+<link rel="icon" type="image/jpeg" href="thyatira.jpeg">
+<link rel="apple-touch-icon" href="thyatira.jpeg">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#020100">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Jost:wght@300;400;500;600&family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
 <!-- Firebase (compat SDK) — same project as dashboard.html.
      No Cloud Functions here: verifyAccessCode/getMediaLink functions
      needed the paid Blaze plan to deploy, which this project isn't on.
@@ -80,6 +91,21 @@
   a{ color:inherit; text-decoration:none; }
   button{ font-family:inherit; cursor:pointer; }
   ::selection{ background:var(--dark-red); color:var(--light-gold); }
+
+  /* ---- Arabic language mode -----------------------------------------
+     Applied on <body> when the visitor picks "ع". Deliberately does NOT
+     flip the whole page to a mirrored RTL layout (that would need a
+     structural redesign of this theme's nav/hero/grids to look right) —
+     instead it switches the reading font and right-aligns text-heavy
+     blocks, which reads correctly in Arabic while keeping the visual
+     design intact. Numbers, codes, and the video player stay LTR. */
+  body.lang-ar{ font-family:'Cairo', var(--font-body); }
+  body.lang-ar h1, body.lang-ar h2, body.lang-ar h3, body.lang-ar h4{ font-family:'Cairo', var(--font-display); }
+  body.lang-ar .tagline, body.lang-ar .desc, body.lang-ar .hint, body.lang-ar p,
+  body.lang-ar .season-desc, body.lang-ar .about-copy p, body.lang-ar .field-label{
+    text-align:right;
+  }
+  body.lang-ar .code-input, body.lang-ar #accessInput{ text-align:left; direction:ltr; } /* codes stay LTR */
 
   ::-webkit-scrollbar{ width:10px; }
   ::-webkit-scrollbar-track{ background:var(--deep-black); }
@@ -241,6 +267,19 @@
   }
   nav.primary-links .nav-cta::after{ display:none; }
   nav.primary-links .nav-cta:hover{ background:rgba(184,111,50,.14); }
+
+  .lang-toggle{
+    background:transparent;
+    border:1px solid var(--dark-brown);
+    color:var(--light-gold);
+    font-size:.78rem;
+    letter-spacing:.04em;
+    padding:8px 14px;
+    border-radius:2px;
+    opacity:.85;
+    transition:opacity .25s var(--ease), border-color .25s var(--ease);
+  }
+  .lang-toggle:hover{ opacity:1; border-color:var(--bronze); }
 
   .menu-toggle{
     display:none;
@@ -809,6 +848,18 @@
     border-top:1px solid var(--dark-brown);
     padding-top:16px;
   }
+  .access-contact{
+    margin-top:10px;
+    font-size:.8rem;
+    opacity:.75;
+    text-align:center;
+  }
+  .access-contact a{
+    color:var(--bronze);
+    text-decoration:underline;
+    text-underline-offset:2px;
+  }
+  .access-contact a:hover{ color:var(--light-gold); }
   .form-msg{
     font-size:.84rem;
     margin-top:12px;
@@ -996,10 +1047,11 @@
   <div class="container nav-inner">
     <a href="#home" class="logo"><span class="mark"></span> Thyatira Team</a>
     <nav class="primary-links">
-      <a href="#home">Home</a>
-      <a href="#seasons">Seasons</a>
-      <a href="#about">About</a>
-      <a href="#" class="nav-cta" id="navEnterCode">Enter Code</a>
+      <a href="#home" data-i18n="nav_home">Home</a>
+      <a href="#seasons" data-i18n="nav_seasons">Seasons</a>
+      <a href="#about" data-i18n="nav_about">About</a>
+      <a href="#" class="nav-cta" id="navEnterCode" data-i18n="nav_enter_code">Enter Code</a>
+      <button class="lang-toggle" id="langToggle" type="button" aria-label="Switch language">EN / ع</button>
     </nav>
     <button class="menu-toggle" id="menuToggle" aria-label="Open menu" aria-expanded="false">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
@@ -1012,10 +1064,11 @@
   <button class="close-panel" id="closePanel" aria-label="Close menu">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><line x1="5" y1="5" x2="19" y2="19"/><line x1="19" y1="5" x2="5" y2="19"/></svg>
   </button>
-  <a href="#home" class="mobile-link">Home</a>
-  <a href="#seasons" class="mobile-link">Seasons</a>
-  <a href="#about" class="mobile-link">About</a>
-  <a href="#" id="mobileEnterCode" class="mobile-link">Enter Code</a>
+  <a href="#home" class="mobile-link" data-i18n="nav_home">Home</a>
+  <a href="#seasons" class="mobile-link" data-i18n="nav_seasons">Seasons</a>
+  <a href="#about" class="mobile-link" data-i18n="nav_about">About</a>
+  <a href="#" id="mobileEnterCode" class="mobile-link" data-i18n="nav_enter_code">Enter Code</a>
+  <button class="lang-toggle mobile-link" id="langToggleMobile" type="button">EN / ع</button>
 </aside>
 
 <main>
@@ -1026,13 +1079,13 @@
     <div class="spotlight s1"></div>
     <div class="spotlight s2"></div>
     <div class="hero-content">
-      <span class="kicker">A digital stage for a theater team</span>
+      <span class="kicker" data-i18n="hero_kicker">A digital stage for a theater team</span>
       <h1>Thyatira Team</h1>
-      <p class="tagline">Experience the Stage Beyond the Stage.</p>
-      <p class="desc">A premium digital space for experiencing Thyatira Team theatrical productions, wherever the audience happens to be sitting.</p>
+      <p class="tagline" data-i18n="hero_tagline">Experience the Stage Beyond the Stage.</p>
+      <p class="desc" data-i18n="hero_desc">A premium digital space for experiencing Thyatira Team theatrical productions, wherever the audience happens to be sitting.</p>
       <div class="hero-actions">
-        <a href="#seasons" class="btn btn-primary"><span class="btn-label">Explore Seasons</span></a>
-        <button class="btn btn-outline" id="heroEnterCode"><span class="btn-label">Enter Access Code</span></button>
+        <a href="#seasons" class="btn btn-primary"><span class="btn-label" data-i18n="hero_explore">Explore Seasons</span></a>
+        <button class="btn btn-outline" id="heroEnterCode"><span class="btn-label" data-i18n="hero_enter_code">Enter Access Code</span></button>
       </div>
     </div>
     <div class="hero-scroll-cue"></div>
@@ -1043,9 +1096,9 @@
     <div class="container">
       <div class="section-head">
         <div>
-          <h2>Seasons</h2>
+          <h2 data-i18n="seasons_title">Seasons</h2>
         </div>
-        <p class="sub">Each season gathers a handful of productions staged and filmed for the Thyatira Team viewer.</p>
+        <p class="sub" data-i18n="seasons_sub">Each season gathers a handful of productions staged and filmed for the Thyatira Team viewer.</p>
       </div>
       <div class="season-grid" id="seasonGrid"></div>
     </div>
@@ -1056,7 +1109,7 @@
     <div class="container">
       <button class="back-link" id="backToSeasons">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-        Back to Seasons
+        <span data-i18n="back_to_seasons">Back to Seasons</span>
       </button>
       <div id="seasonViewContent"></div>
     </div>
@@ -1070,10 +1123,10 @@
       </div>
       <div class="about-copy">
         <div class="eyebrow-rule"><span class="line"></span></div>
-        <h2 style="margin-bottom:20px;">About Thyatira Team</h2>
-        <p>Thyatira Team is a theater group that writes, rehearses, and stages original productions, then brings them to a wider audience through this viewer. Every season is filmed and produced with the same care given to the performance itself.</p>
-        <p>This site exists so the people who support the team can watch from anywhere — a season pass and an access code stand in for a seat in the room.</p>
-        <p class="signature">— The Thyatira Team</p>
+        <h2 style="margin-bottom:20px;" data-i18n="about_title">About Thyatira Team</h2>
+        <p data-i18n="about_p1">Thyatira Team is a theater group that writes, rehearses, and stages original productions, then brings them to a wider audience through this viewer. Every season is filmed and produced with the same care given to the performance itself.</p>
+        <p data-i18n="about_p2">This site exists so the people who support the team can watch from anywhere — a season pass and an access code stand in for a seat in the room.</p>
+        <p class="signature" data-i18n="about_signature">— The Thyatira Team</p>
       </div>
     </div>
   </section>
@@ -1085,24 +1138,24 @@
     <div class="footer-top">
       <div class="footer-brand">
         <div class="logo"><span class="mark"></span> Thyatira Team</div>
-        <p>Theater. Stories. Experience.</p>
+        <p data-i18n="footer_tag">Theater. Stories. Experience.</p>
       </div>
       <div class="footer-links">
         <div class="footer-col">
-          <h5>Explore</h5>
-          <a href="#home">Home</a>
-          <a href="#seasons">Seasons</a>
-          <a href="#about">About</a>
+          <h5 data-i18n="footer_explore">Explore</h5>
+          <a href="#home" data-i18n="nav_home">Home</a>
+          <a href="#seasons" data-i18n="nav_seasons">Seasons</a>
+          <a href="#about" data-i18n="nav_about">About</a>
         </div>
         <div class="footer-col">
-          <h5>Access</h5>
-          <a href="#" id="footerEnterCode">Enter Access Code</a>
+          <h5 data-i18n="footer_access">Access</h5>
+          <a href="#" id="footerEnterCode" data-i18n="nav_enter_code_long">Enter Access Code</a>
         </div>
       </div>
     </div>
     <div class="footer-bottom">
-      <span>© <span id="year"></span> Thyatira Team. All rights reserved.</span>
-      <span>Built for the stage, brought to the screen.</span>
+      <span><span data-i18n="footer_rights_prefix">©</span> <span id="year"></span> <span data-i18n="footer_rights_suffix">Thyatira Team. All rights reserved.</span></span>
+      <span data-i18n="footer_line">Built for the stage, brought to the screen.</span>
     </div>
   </div>
 </footer>
@@ -1113,16 +1166,19 @@
     <button class="modal-close" id="closeAccessModal" aria-label="Close">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><line x1="5" y1="5" x2="19" y2="19"/><line x1="19" y1="5" x2="5" y2="19"/></svg>
     </button>
-    <h3 id="accessModalTitle">Unlock Your Season</h3>
-    <p class="hint">Enter the access code from your season pass to unlock its productions.</p>
-    <label class="field-label" for="accessInput">Enter your Season Access Code</label>
+    <h3 id="accessModalTitle" data-i18n="access_title">Unlock Your Season</h3>
+    <p class="hint" data-i18n="access_hint">Enter your name and the access code from your season pass to unlock its productions.</p>
+    <label class="field-label" for="viewerNameInput" data-i18n="access_name_label">Your Name</label>
+    <input type="text" id="viewerNameInput" class="code-input" placeholder="e.g. Mona Ahmed" autocomplete="name">
+    <label class="field-label" for="accessInput" data-i18n="access_code_label">Enter your Season Access Code</label>
     <input type="text" id="accessInput" class="code-input" placeholder="THY-XXXX-XXXX" autocomplete="off" spellcheck="false">
-    <p class="field-example">Example: THY-7K9P-X2LM</p>
+    <p class="field-example" data-i18n="access_example">Example: THY-7K9P-X2LM</p>
     <button class="btn btn-primary" id="verifyAccessBtn" style="width:100%;">
-      <span class="spinner"></span><span class="btn-label">Verify Access</span>
+      <span class="spinner"></span><span class="btn-label" data-i18n="access_verify_btn">Verify Access</span>
     </button>
     <p class="form-msg" id="accessMsg" role="status" aria-live="polite"></p>
-    <p class="access-note">Your code unlocks this browser only, for 24 hours.</p>
+    <p class="access-note" data-i18n="access_note">Your code and name are remembered on this browser, so you won't need to re-enter them next time.</p>
+    <p class="access-contact"><span data-i18n="access_no_code">Don't have a code?</span> <a href="https://wa.me/201000000000?text=Hi%2C%20I%27d%20like%20to%20get%20a%20Thyatira%20Team%20access%20code" target="_blank" rel="noopener" data-i18n="access_whatsapp">Message us on WhatsApp</a></p>
   </div>
 </div>
 
@@ -1131,7 +1187,7 @@
   <div class="video-topbar">
     <button class="back-link" id="closeVideo">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-      Back
+      <span data-i18n="back">Back</span>
     </button>
   </div>
   <div class="video-stage" id="videoStage">
@@ -1193,16 +1249,42 @@
     return id;
   }
 
-  /* Unlocked-season sessions persist in sessionStorage (per tab) —
-     { [seasonId]: { token, viewerLabel, expires } }. The token is an
-     opaque bearer value; the server (getMediaLink) re-checks it on
-     every single request, so nothing here is trusted on its own. */
+  /* Unlocked-season sessions persist in localStorage — { [seasonId]:
+     { code, viewerName, viewerLabel, expires } } — so a returning
+     visitor on the SAME browser doesn't have to re-type their code
+     (and, since the device is already recognized, doesn't consume the
+     code's usage limit again either — see the device-fingerprint check
+     in verifyCode below). This is a client-side convenience cache only;
+     Firestore Security Rules re-check the real session document on
+     every request for the video itself, so nothing here is trusted on
+     its own. Anything past its own `expires` date is dropped on load
+     so an old entry can't make a season look unlocked when it isn't. */
   function loadUnlockedSeasons(){
-    try { return JSON.parse(sessionStorage.getItem("thyatiraUnlocked") || "{}"); }
-    catch(e){ return {}; }
+    var map;
+    try { map = JSON.parse(localStorage.getItem("thyatiraUnlocked") || "{}"); }
+    catch(e){ map = {}; }
+    var today = new Date().toISOString().slice(0,10);
+    var changed = false;
+    Object.keys(map).forEach(function(seasonId){
+      if (map[seasonId] && map[seasonId].expires && map[seasonId].expires < today){
+        delete map[seasonId];
+        changed = true;
+      }
+    });
+    if (changed) saveUnlockedSeasons(map);
+    return map;
   }
   function saveUnlockedSeasons(map){
-    sessionStorage.setItem("thyatiraUnlocked", JSON.stringify(map));
+    localStorage.setItem("thyatiraUnlocked", JSON.stringify(map));
+  }
+
+  /* The visitor's own name, remembered so the "Your Name" field on the
+     access modal pre-fills itself on a return visit. */
+  function loadSavedViewerName(){
+    return localStorage.getItem("thyatiraViewerName") || "";
+  }
+  function saveViewerName(name){
+    localStorage.setItem("thyatiraViewerName", name);
   }
 
   /* ===================== STATE =====================
@@ -1238,6 +1320,167 @@
     for (var i=0;i<seasons.length;i++){ if (seasons[i].id === id) return seasons[i]; }
     return null;
   }
+
+  /* ===================== LANGUAGE / i18n =====================
+     Translates this site's own interface text (nav, buttons, messages).
+     It does NOT translate content the admin typed into the dashboard —
+     season names, descriptions, production titles, etc. stay exactly as
+     entered, in whichever language the admin wrote them. Layout stays
+     left-to-right structurally in both languages (see the .lang-ar CSS
+     notes above); only the font and text alignment change for Arabic. */
+  var STRINGS = {
+    en: {
+      nav_home:"Home", nav_seasons:"Seasons", nav_about:"About",
+      nav_enter_code:"Enter Code", nav_enter_code_long:"Enter Access Code",
+      hero_kicker:"A digital stage for a theater team",
+      hero_tagline:"Experience the Stage Beyond the Stage.",
+      hero_desc:"A premium digital space for experiencing Thyatira Team theatrical productions, wherever the audience happens to be sitting.",
+      hero_explore:"Explore Seasons", hero_enter_code:"Enter Access Code",
+      seasons_title:"Seasons",
+      seasons_sub:"Each season gathers a handful of productions staged and filmed for the Thyatira Team viewer.",
+      back_to_seasons:"Back to Seasons", back:"Back",
+      about_title:"About Thyatira Team",
+      about_p1:"Thyatira Team is a theater group that writes, rehearses, and stages original productions, then brings them to a wider audience through this viewer. Every season is filmed and produced with the same care given to the performance itself.",
+      about_p2:"This site exists so the people who support the team can watch from anywhere — a season pass and an access code stand in for a seat in the room.",
+      about_signature:"— The Thyatira Team",
+      footer_tag:"Theater. Stories. Experience.",
+      footer_explore:"Explore", footer_access:"Access",
+      footer_rights_prefix:"©", footer_rights_suffix:"Thyatira Team. All rights reserved.",
+      footer_line:"Built for the stage, brought to the screen.",
+      access_title:"Unlock Your Season",
+      access_hint:"Enter your name and the access code from your season pass to unlock its productions.",
+      access_name_label:"Your Name", access_code_label:"Enter your Season Access Code",
+      access_example:"Example: THY-7K9P-X2LM", access_verify_btn:"Verify Access",
+      access_note:"Your code and name are remembered on this browser, so you won't need to re-enter them next time.",
+      access_no_code:"Don't have a code?", access_whatsapp:"Message us on WhatsApp",
+      status_published:"Published", status_coming_soon:"Coming Soon",
+      btn_view_season:"View Season", btn_watch_now:"Watch Now", btn_unlock:"Unlock",
+      production_singular:" production", production_plural:" productions",
+      empty_no_seasons_title:"No seasons published yet",
+      empty_no_seasons_body:"Check back soon — new seasons appear here as soon as they're released.",
+      empty_no_shows_title:"This season hasn't premiered yet",
+      empty_no_shows_body:"Check back soon for the full lineup.",
+      empty_no_productions_title:"Nothing staged here yet",
+      empty_no_productions_body:"Productions for this season are still being rehearsed. Check back soon.",
+      season_release:"Release", season_price:"Price", season_productions:"Productions",
+      season_word:"Season",
+      season_locked_suffix:" · Locked",
+      toast_coming_soon:"This season hasn't premiered yet — check back soon.",
+      toast_enter_code:"Enter your access code to unlock Season ",
+      toast_access_granted:"Access Granted",
+      video_loading:"Loading video…",
+      video_unavailable:"This production's video isn't available yet.",
+      video_denied:"Access to this video was denied. Try re-entering your access code, or contact the admin if this keeps happening.",
+      video_error:"This production is currently unavailable. Please try again shortly.",
+      video_runtime:"Runtime: ",
+      watermark_viewer_prefix:"Viewer: ", watermark_session_prefix:"Session: ",
+      toast_season_unlocked_suffix:" — Season ", toast_video_open_failed:"Couldn't open this video. Try re-entering your access code.",
+      status_msg_invalid:"That code isn't recognized. Double-check and try again.",
+      status_msg_expired:"This code has expired. Please contact us for a new one.",
+      status_msg_revoked:"This code is no longer active.",
+      status_msg_limit_reached:"This code has reached its usage limit.",
+      status_msg_device_limit:"This code is already in use on the maximum number of devices.",
+      status_msg_auth_error:"Couldn't connect right now. Check your connection and try again.",
+      status_msg_permission_denied:"Access was denied by the server rules for this code. This is a setup issue, not your code — contact the admin.",
+      status_msg_error:"Something went wrong. Please try again.",
+      validation_enter_name:"Enter your name to continue.",
+      validation_enter_code:"Enter a code to continue."
+    },
+    ar: {
+      nav_home:"الرئيسية", nav_seasons:"المواسم", nav_about:"عن الفريق",
+      nav_enter_code:"إدخال الكود", nav_enter_code_long:"إدخال كود الدخول",
+      hero_kicker:"مسرح رقمي لفريق مسرحي",
+      hero_tagline:"عيش المسرح فيما وراء الخشبة.",
+      hero_desc:"مساحة رقمية مميزة لمشاهدة عروض فريق ثياتيرا المسرحية، أينما كان الجمهور.",
+      hero_explore:"استعرض المواسم", hero_enter_code:"إدخال كود الدخول",
+      seasons_title:"المواسم",
+      seasons_sub:"كل موسم يضم مجموعة من العروض التي تم تصويرها خصيصًا لمشاهدي فريق ثياتيرا.",
+      back_to_seasons:"العودة إلى المواسم", back:"رجوع",
+      about_title:"عن فريق ثياتيرا",
+      about_p1:"فريق ثياتيرا فرقة مسرحية تكتب وتتدرب وتقدّم عروضًا مسرحية أصلية، ثم تصلها لجمهور أوسع من خلال هذه المنصة. كل موسم يتم تصويره وإنتاجه بنفس العناية التي يُقدَّم بها العرض نفسه.",
+      about_p2:"هذا الموقع موجود ليتيح لمن يدعمون الفريق المشاهدة من أي مكان — كود الدخول هو بمثابة مقعدك في الصالة.",
+      about_signature:"— فريق ثياتيرا",
+      footer_tag:"مسرح. حكايات. تجربة.",
+      footer_explore:"استكشف", footer_access:"الدخول",
+      footer_rights_prefix:"©", footer_rights_suffix:"فريق ثياتيرا. جميع الحقوق محفوظة.",
+      footer_line:"صُنع للمسرح، وصل إلى الشاشة.",
+      access_title:"افتح موسمك",
+      access_hint:"أدخل اسمك وكود الدخول الخاص بموسمك لفتح عروضه.",
+      access_name_label:"اسمك", access_code_label:"أدخل كود دخول الموسم",
+      access_example:"مثال: THY-7K9P-X2LM", access_verify_btn:"تحقق من الكود",
+      access_note:"يتم حفظ الكود والاسم على هذا المتصفح، فلن تحتاج لإدخالهما مرة أخرى.",
+      access_no_code:"ليس لديك كود؟", access_whatsapp:"راسلنا على واتساب",
+      status_published:"منشور", status_coming_soon:"قريبًا",
+      btn_view_season:"عرض الموسم", btn_watch_now:"شاهد الآن", btn_unlock:"افتح الموسم",
+      production_singular:" عرض", production_plural:" عروض",
+      empty_no_seasons_title:"لا توجد مواسم منشورة بعد",
+      empty_no_seasons_body:"تابعنا قريبًا — تظهر المواسم الجديدة هنا فور نشرها.",
+      empty_no_shows_title:"هذا الموسم لم يُعرض بعد",
+      empty_no_shows_body:"تابعنا قريبًا لمعرفة قائمة العروض الكاملة.",
+      empty_no_productions_title:"لا توجد عروض هنا بعد",
+      empty_no_productions_body:"عروض هذا الموسم لا تزال قيد التحضير. تابعنا قريبًا.",
+      season_release:"تاريخ العرض", season_price:"السعر", season_productions:"عدد العروض",
+      season_word:"موسم",
+      season_locked_suffix:" · مقفول",
+      toast_coming_soon:"هذا الموسم لم يُعرض بعد — تابعنا قريبًا.",
+      toast_enter_code:"أدخل كود الدخول لفتح الموسم ",
+      toast_access_granted:"تم منح الدخول",
+      video_loading:"جاري تحميل الفيديو…",
+      video_unavailable:"فيديو هذا العرض غير متاح بعد.",
+      video_denied:"تم رفض الوصول لهذا الفيديو. حاول إعادة إدخال كود الدخول، أو تواصل مع الإدارة إذا تكررت المشكلة.",
+      video_error:"هذا العرض غير متاح حاليًا. برجاء المحاولة مرة أخرى بعد قليل.",
+      video_runtime:"المدة: ",
+      watermark_viewer_prefix:"المشاهد: ", watermark_session_prefix:"الجلسة: ",
+      toast_season_unlocked_suffix:" — الموسم ", toast_video_open_failed:"تعذّر فتح هذا الفيديو. حاول إعادة إدخال كود الدخول.",
+      status_msg_invalid:"هذا الكود غير معروف. تأكد منه وحاول مرة أخرى.",
+      status_msg_expired:"انتهت صلاحية هذا الكود. برجاء التواصل للحصول على كود جديد.",
+      status_msg_revoked:"هذا الكود لم يعد نشطًا.",
+      status_msg_limit_reached:"وصل هذا الكود للحد الأقصى من الاستخدام.",
+      status_msg_device_limit:"هذا الكود مستخدم بالفعل على الحد الأقصى من الأجهزة.",
+      status_msg_auth_error:"تعذّر الاتصال الآن. تحقق من اتصالك وحاول مرة أخرى.",
+      status_msg_permission_denied:"تم رفض الوصول بواسطة قواعد الخادم لهذا الكود. هذه مشكلة إعداد وليست بسبب الكود — تواصل مع الإدارة.",
+      status_msg_error:"حدث خطأ ما. برجاء المحاولة مرة أخرى.",
+      validation_enter_name:"أدخل اسمك للمتابعة.",
+      validation_enter_code:"أدخل الكود للمتابعة."
+    }
+  };
+
+  var currentLang = localStorage.getItem("thyatiraLang") || "en";
+
+  function t(key){
+    return (STRINGS[currentLang] && STRINGS[currentLang][key]) || STRINGS.en[key] || key;
+  }
+
+  function applyStaticI18n(){
+    document.documentElement.setAttribute("lang", currentLang);
+    document.body.classList.toggle("lang-ar", currentLang === "ar");
+    qsa("[data-i18n]").forEach(function(el){
+      el.textContent = t(el.getAttribute("data-i18n"));
+    });
+    [qs("#langToggle"), qs("#langToggleMobile")].forEach(function(btn){
+      if (btn) btn.textContent = currentLang === "ar" ? "AR / En" : "EN / ع";
+    });
+  }
+
+  function setLanguage(lang){
+    currentLang = lang;
+    localStorage.setItem("thyatiraLang", lang);
+    applyStaticI18n();
+    // Re-render anything already built with hardcoded strings in the old language.
+    renderSeasons();
+    if (currentOpenSeasonId){
+      var s = seasonById(currentOpenSeasonId);
+      if (s) renderSeasonView(s);
+    }
+  }
+
+  function toggleLanguage(){
+    setLanguage(currentLang === "ar" ? "en" : "ar");
+  }
+  [qs("#langToggle"), qs("#langToggleMobile")].forEach(function(btn){
+    if (btn) btn.addEventListener("click", toggleLanguage);
+  });
+  applyStaticI18n(); // apply saved/default language to static markup immediately
 
   /* ===================== NAV BEHAVIOR ===================== */
   var siteNav = qs("#siteNav");
@@ -1361,7 +1604,7 @@
     if (!seasons.length){
       var empty = document.createElement("div");
       empty.className = "empty-state";
-      empty.innerHTML = "<h4>No seasons published yet</h4><p>Check back soon — new seasons appear here as soon as they're released.</p>";
+      empty.innerHTML = "<h4>" + t("empty_no_seasons_title") + "</h4><p>" + t("empty_no_seasons_body") + "</p>";
       grid.appendChild(empty);
       return;
     }
@@ -1385,7 +1628,7 @@
       cover.appendChild(ghost);
       var pill = document.createElement("span");
       pill.className = "status-pill " + pillClass;
-      pill.textContent = isComingSoon ? "Coming Soon" : "Published";
+      pill.textContent = isComingSoon ? t("status_coming_soon") : t("status_published");
       cover.appendChild(pill);
       if (!isComingSoon && !isUnlocked){
         var lock = document.createElement("span");
@@ -1401,20 +1644,20 @@
       var body = document.createElement("div");
       body.className = "season-body";
       body.innerHTML =
-        '<span class="season-number">Season ' + s.number + '</span>' +
+        '<span class="season-number">' + t("season_word") + ' ' + s.number + '</span>' +
         '<p class="desc">' + (s.desc || "") + '</p>' +
         '<div class="season-meta">' +
           '<span>' + (s.date || "") + '</span>' +
-          '<span>' + productionCount + (productionCount===1?' production':' productions') + '</span>' +
+          '<span>' + productionCount + (productionCount===1 ? t("production_singular") : t("production_plural")) + '</span>' +
           '<span class="price">' + (s.price || "") + '</span>' +
         '</div>';
 
       var btn = document.createElement("button");
       btn.className = "btn btn-outline view-btn";
-      btn.textContent = isComingSoon ? "Coming Soon" : "View Season";
+      btn.textContent = isComingSoon ? t("status_coming_soon") : t("btn_view_season");
       if (isComingSoon){
         btn.addEventListener("click", function(){
-          showToast("This season hasn't premiered yet — check back soon.");
+          showToast(t("toast_coming_soon"));
         });
       } else {
         btn.addEventListener("click", function(){ openSeasonView(s.id); });
@@ -1442,13 +1685,13 @@
           (s.coverUrl ? '' : '<span class="ghost-num">' + String(s.number).padStart(2,"0") + '</span>') +
         '</div>' +
         '<div class="season-view-info">' +
-          '<span class="season-number">Season ' + s.number + (isLocked ? " · Locked" : "") + '</span>' +
+          '<span class="season-number">' + t("season_word") + ' ' + s.number + (isLocked ? t("season_locked_suffix") : "") + '</span>' +
           '<h2>' + s.name + '</h2>' +
           '<p class="desc">' + (s.desc || "") + '</p>' +
           '<div class="season-view-facts">' +
-            '<div><strong>' + (s.date || "") + '</strong>Release</div>' +
-            '<div><strong>' + (s.price || "") + '</strong>Price</div>' +
-            '<div><strong>' + productions.length + '</strong>Productions</div>' +
+            '<div><strong>' + (s.date || "") + '</strong>' + t("season_release") + '</div>' +
+            '<div><strong>' + (s.price || "") + '</strong>' + t("season_price") + '</div>' +
+            '<div><strong>' + productions.length + '</strong>' + t("season_productions") + '</div>' +
           '</div>' +
         '</div>' +
       '</div>';
@@ -1457,14 +1700,14 @@
     if (isComingSoon){
       productionsHtml =
         '<div class="empty-state">' +
-          '<h4>This season hasn\'t premiered yet</h4>' +
-          '<p>Check back soon for the full lineup.</p>' +
+          '<h4>' + t("empty_no_shows_title") + '</h4>' +
+          '<p>' + t("empty_no_shows_body") + '</p>' +
         '</div>';
     } else if (productions.length === 0){
       productionsHtml =
         '<div class="empty-state">' +
-          '<h4>Nothing staged here yet</h4>' +
-          '<p>Productions for this season are still being rehearsed. Check back soon.</p>' +
+          '<h4>' + t("empty_no_productions_title") + '</h4>' +
+          '<p>' + t("empty_no_productions_body") + '</p>' +
         '</div>';
     } else {
       productionsHtml = '<div class="production-grid">' + productions.map(function(p){
@@ -1482,7 +1725,7 @@
             '<div class="watch-row">' +
               '<span>' + (p.date || "") + '</span>' +
               '<button class="watch-btn" data-season="' + s.id + '" data-production="' + p.id + '">' +
-                (isLocked ? 'Unlock' : 'Watch Now') +
+                (isLocked ? t("btn_unlock") : t("btn_watch_now")) +
               '</button>' +
             '</div>' +
           '</div>' +
@@ -1499,7 +1742,7 @@
         var season = seasonById(seasonId);
         if (!season) return;
         if (!isComingSoon && !unlockedSeasons[seasonId]){
-          showToast("Enter your access code to unlock Season " + season.number + ".");
+          showToast(t("toast_enter_code") + season.number + ".");
           openAccessModal();
           return;
         }
@@ -1532,6 +1775,7 @@
   /* ===================== ACCESS MODAL ===================== */
   var accessModal = qs("#accessModal");
   var accessInput = qs("#accessInput");
+  var viewerNameInput = qs("#viewerNameInput");
   var accessMsg = qs("#accessMsg");
   var verifyBtn = qs("#verifyAccessBtn");
   var lastFocused = null;
@@ -1542,7 +1786,8 @@
     accessMsg.textContent = "";
     accessMsg.className = "form-msg";
     accessInput.value = "";
-    setTimeout(function(){ accessInput.focus(); }, 50);
+    viewerNameInput.value = loadSavedViewerName();
+    setTimeout(function(){ (viewerNameInput.value ? accessInput : viewerNameInput).focus(); }, 50);
   }
   function closeAccessModal(){
     accessModal.classList.remove("open");
@@ -1554,15 +1799,15 @@
   qs("#closeAccessModal").addEventListener("click", closeAccessModal);
   accessModal.addEventListener("click", function(e){ if (e.target === accessModal) closeAccessModal(); });
 
-  var ACCESS_STATUS_MESSAGES = {
-    invalid:        "That code isn't recognized. Double-check and try again.",
-    expired:        "This code has expired. Please contact us for a new one.",
-    revoked:        "This code is no longer active.",
-    limit_reached:  "This code has reached its usage limit.",
-    device_limit:   "This code is already in use on the maximum number of devices.",
-    auth_error:     "Couldn't connect right now. Check your connection and try again.",
-    permission_denied: "Access was denied by the server rules for this code. This is a setup issue, not your code — contact the admin.",
-    error:          "Something went wrong. Please try again."
+  var ACCESS_STATUS_KEYS = {
+    invalid:            "status_msg_invalid",
+    expired:            "status_msg_expired",
+    revoked:            "status_msg_revoked",
+    limit_reached:      "status_msg_limit_reached",
+    device_limit:       "status_msg_device_limit",
+    auth_error:         "status_msg_auth_error",
+    permission_denied:  "status_msg_permission_denied",
+    error:              "status_msg_error"
   };
 
   function todayStr(){ return new Date().toISOString().slice(0,10); }
@@ -1578,9 +1823,17 @@
    */
   function verifyCode(){
     var raw = accessInput.value.trim().toUpperCase();
-    if (!raw){
-      accessMsg.textContent = "Enter a code to continue.";
+    var name = viewerNameInput.value.trim();
+    if (!name){
+      accessMsg.textContent = t("validation_enter_name");
       accessMsg.className = "form-msg error";
+      viewerNameInput.focus();
+      return;
+    }
+    if (!raw){
+      accessMsg.textContent = t("validation_enter_code");
+      accessMsg.className = "form-msg error";
+      accessInput.focus();
       return;
     }
     verifyBtn.classList.add("is-loading");
@@ -1590,6 +1843,7 @@
 
     var deviceId = getDeviceFingerprint();
     var codeRef;
+    var sessionExpiresIso;
 
     ensureAuth()
       .catch(function(err){
@@ -1620,13 +1874,15 @@
             var sessionRef = db.collection("sessions").doc(user.uid + "_" + c.seasonId);
             var expiresDate = new Date();
             expiresDate.setHours(expiresDate.getHours() + 24);
+            sessionExpiresIso = expiresDate.toISOString().slice(0,10);
             tx.set(sessionRef, {
               code: raw,
               seasonId: c.seasonId,
               seasonName: (seasonById(c.seasonId) || {}).name || "",
               viewer: c.viewer || "Guest",
+              viewerName: name,
               created: todayStr(),
-              expires: expiresDate.toISOString().slice(0,10),
+              expires: sessionExpiresIso,
               status: "Active"
             });
 
@@ -1635,13 +1891,15 @@
         });
       })
       .then(function(result){
-        unlockedSeasons[result.seasonId] = { code: raw, viewerLabel: result.viewerLabel, expires: null };
+        saveViewerName(name);
+        unlockedSeasons[result.seasonId] = { code: raw, viewerName: name, viewerLabel: result.viewerLabel, expires: sessionExpiresIso };
         saveUnlockedSeasons(unlockedSeasons);
-        viewerLabel = result.viewerLabel;
-        accessMsg.textContent = "Access Granted";
+        viewerLabel = name || result.viewerLabel;
+        qs("#watermarkViewer").textContent = t("watermark_viewer_prefix") + viewerLabel;
+        accessMsg.textContent = t("toast_access_granted");
         accessMsg.className = "form-msg success";
         var s = seasonById(result.seasonId);
-        showToast("Access Granted" + (s ? " — Season " + s.number + " unlocked." : "."));
+        showToast(t("toast_access_granted") + (s ? t("toast_season_unlocked_suffix") + s.number + "." : "."));
         renderSeasons();
         setTimeout(function(){
           closeAccessModal();
@@ -1659,7 +1917,7 @@
           console.error("verifyCode failed — Firestore code:", err && err.code, err);
           if (err && err.code === "permission-denied") status = "permission_denied";
         }
-        accessMsg.textContent = ACCESS_STATUS_MESSAGES[status] || ACCESS_STATUS_MESSAGES.invalid;
+        accessMsg.textContent = t(ACCESS_STATUS_KEYS[status] || ACCESS_STATUS_KEYS.invalid);
         accessMsg.className = "form-msg error";
       })
       .then(function(){
@@ -1685,7 +1943,7 @@
   var watermarkEl = qs("#watermark");
   var watermarkTimer = null;
 
-  qs("#watermarkViewer").textContent = "Viewer: " + (viewerLabel || "————");
+  qs("#watermarkViewer").textContent = t("watermark_viewer_prefix") + (viewerLabel || "————");
 
   function moveWatermark(){
     var top = 8 + Math.random()*70;
@@ -1695,21 +1953,22 @@
   }
 
   function openVideo(season, production){
-    qs("#videoSeasonTag").textContent = "Season " + season.number + " — " + season.name;
+    qs("#videoSeasonTag").textContent = t("season_word") + " " + season.number + " — " + season.name;
     qs("#videoTitle").textContent = production.title;
     qs("#videoDesc").textContent = production.desc || "";
-    qs("#videoDuration").textContent = production.duration ? ("Runtime: " + production.duration) : "";
+    qs("#videoDuration").textContent = production.duration ? (t("video_runtime") + production.duration) : "";
 
     playerFrame.style.display = "none";
     playerFrame.src = "about:blank";
     playerEmpty.style.display = "flex";
-    playerEmpty.textContent = "Loading video…";
+    playerEmpty.textContent = t("video_loading");
     videoOverlay.classList.add("open");
     document.body.style.overflow = "hidden";
 
     var unlocked = unlockedSeasons[season.id];
-    var sessionLabel = unlocked ? (unlocked.viewerLabel || unlocked.code) : null;
-    qs("#watermarkSession").textContent = sessionLabel ? "Session: " + sessionLabel : "";
+    var sessionLabel = unlocked ? (unlocked.viewerName || unlocked.viewerLabel || unlocked.code) : null;
+    qs("#watermarkViewer").textContent = t("watermark_viewer_prefix") + (sessionLabel || "————");
+    qs("#watermarkSession").textContent = unlocked ? (t("watermark_session_prefix") + unlocked.code) : "";
 
     ensureAuth()
       .then(function(){
@@ -1720,7 +1979,7 @@
       })
       .then(function(doc){
         if (!doc.exists || !doc.data().driveId){
-          playerEmpty.textContent = "This production's video isn't available yet.";
+          playerEmpty.textContent = t("video_unavailable");
           return;
         }
         var driveId = doc.data().driveId;
@@ -1740,11 +1999,11 @@
         // that anything is wrong with the production itself.
         console.error("openVideo failed — Firestore code:", err && err.code, err);
         if (err && err.code === "permission-denied"){
-          playerEmpty.textContent = "Access to this video was denied. Try re-entering your access code, or contact the admin if this keeps happening.";
+          playerEmpty.textContent = t("video_denied");
         } else {
-          playerEmpty.textContent = "This production is currently unavailable. Please try again shortly.";
+          playerEmpty.textContent = t("video_error");
         }
-        showToast("Couldn't open this video. Try re-entering your access code.", "error");
+        showToast(t("toast_video_open_failed"), "error");
       });
   }
 
