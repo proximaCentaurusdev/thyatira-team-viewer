@@ -1,0 +1,14 @@
+{
+  "name": "Thyatira Team",
+  "short_name": "Thyatira",
+  "description": "A premium digital space for experiencing Thyatira Team theatrical productions.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#020100",
+  "theme_color": "#020100",
+  "icons": [
+    { "src": "thyatira.jpeg", "sizes": "192x192", "type": "image/jpeg" },
+    { "src": "thyatira.jpeg", "sizes": "512x512", "type": "image/jpeg" }
+  ]
+}
