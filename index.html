@@ -1317,11 +1317,18 @@
   function fetchSeasons(){
     renderSeasonSkeletons(3);
 
+    // BUGFIX: `.where("status","in",[...]).orderBy("number")` needs a
+    // composite index in Firestore (an "in" filter + orderBy on a
+    // different field always does). Without that index created in the
+    // console, this query fails outright with FAILED_PRECONDITION and the
+    // season grid never loads — which looks exactly like "nothing I add
+    // ever shows up". Dropping the server-side orderBy and sorting the
+    // small season list client-side avoids needing that index at all.
     db.collection("seasons")
       .where("status", "in", ["published", "soon"])
-      .orderBy("number")
       .onSnapshot(function(snap){
         seasons = snap.docs.map(function(d){ return Object.assign({ id: d.id }, d.data()); });
+        seasons.sort(function(a, b){ return (a.number || 0) - (b.number || 0); });
         seasonsLoaded = true;
         onSeasonsOrProductionsChanged();
       }, function(err){ showSeasonsLoadError(err); });
