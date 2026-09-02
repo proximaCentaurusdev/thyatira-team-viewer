@@ -1,0 +1,1673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Thyatira Team — Experience the Stage Beyond the Stage</title>
+<meta name="description" content="A premium digital space for experiencing Thyatira Team theatrical productions.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* ===================== ROOT / VARIABLES ===================== */
+  :root{
+    --black:#000000;
+    --deep-black:#020100;
+    --deep-red:#1F0304;
+    --dark-crimson:#440405;
+    --dark-red:#550D09;
+    --red:#7E110B;
+    --deep-burgundy:#360002;
+    --dark-brown:#3A0B08;
+    --burnt-orange:#A5400F;
+    --bronze:#B86F32;
+    --golden-brown:#73330F;
+    --light-gold:#ECC18B;
+
+    --font-display: 'Cormorant Garamond', serif;
+    --font-body: 'Jost', sans-serif;
+
+    --ease: cubic-bezier(.22,.61,.36,1);
+  }
+
+  *,*::before,*::after{ box-sizing:border-box; }
+  html{ scroll-behavior:smooth; }
+  @media (prefers-reduced-motion: reduce){
+    html{ scroll-behavior:auto; }
+    *,*::before,*::after{ animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important; }
+  }
+
+  body{
+    margin:0;
+    background:var(--black);
+    color:var(--light-gold);
+    font-family:var(--font-body);
+    font-weight:300;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+
+  img{ max-width:100%; display:block; -webkit-user-drag:none; user-select:none; }
+  a{ color:inherit; text-decoration:none; }
+  button{ font-family:inherit; cursor:pointer; }
+  ::selection{ background:var(--dark-red); color:var(--light-gold); }
+
+  ::-webkit-scrollbar{ width:10px; }
+  ::-webkit-scrollbar-track{ background:var(--deep-black); }
+  ::-webkit-scrollbar-thumb{ background:var(--dark-brown); border-radius:0; }
+  ::-webkit-scrollbar-thumb:hover{ background:var(--bronze); }
+
+  :focus-visible{
+    outline:2px solid var(--bronze);
+    outline-offset:3px;
+  }
+
+  .container{
+    width:100%;
+    max-width:1180px;
+    margin:0 auto;
+    padding:0 32px;
+  }
+
+  h1,h2,h3,h4{
+    font-family:var(--font-display);
+    color:var(--light-gold);
+    margin:0;
+    font-weight:600;
+  }
+
+  .eyebrow-rule{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    margin-bottom:18px;
+  }
+  .eyebrow-rule .num{
+    font-family:var(--font-display);
+    font-style:italic;
+    color:var(--bronze);
+    font-size:1.1rem;
+  }
+  .eyebrow-rule .line{
+    height:1px;
+    flex:1;
+    max-width:64px;
+    background:linear-gradient(90deg,var(--bronze),transparent);
+  }
+
+  .btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    padding:15px 30px;
+    font-family:var(--font-body);
+    font-size:.95rem;
+    letter-spacing:.03em;
+    border-radius:2px;
+    border:1px solid transparent;
+    transition:transform .35s var(--ease), box-shadow .35s var(--ease), background .35s var(--ease), border-color .35s var(--ease), color .35s var(--ease);
+    white-space:nowrap;
+  }
+  .btn-primary{
+    background:linear-gradient(135deg,var(--red),var(--burnt-orange));
+    color:var(--light-gold);
+    box-shadow:0 10px 30px -12px rgba(126,17,11,.65);
+  }
+  .btn-primary:hover{
+    transform:translateY(-2px);
+    box-shadow:0 16px 34px -10px rgba(165,64,15,.75);
+  }
+  .btn-outline{
+    background:transparent;
+    color:var(--light-gold);
+    border:1px solid var(--bronze);
+  }
+  .btn-outline:hover{
+    background:rgba(184,111,50,.12);
+    border-color:var(--light-gold);
+    transform:translateY(-2px);
+  }
+  .btn:disabled{
+    opacity:.45;
+    cursor:not-allowed;
+    transform:none !important;
+  }
+  .btn .spinner{ display:none; }
+  .btn.is-loading .spinner{ display:inline-block; }
+  .btn.is-loading .btn-label{ opacity:.75; }
+
+  .spinner{
+    width:15px; height:15px;
+    border-radius:50%;
+    border:2px solid rgba(236,193,139,.35);
+    border-top-color:var(--light-gold);
+    animation:spin .8s linear infinite;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+
+  /* ===================== NAV ===================== */
+  header.site-nav{
+    position:fixed;
+    top:0; left:0; right:0;
+    z-index:500;
+    padding:22px 0;
+    background:linear-gradient(180deg, rgba(2,1,0,.92), rgba(2,1,0,0));
+    transition:background .4s var(--ease), padding .4s var(--ease), border-color .4s var(--ease);
+    border-bottom:1px solid transparent;
+  }
+  header.site-nav.scrolled{
+    background:rgba(2,1,0,.94);
+    backdrop-filter:blur(10px);
+    padding:14px 0;
+    border-bottom:1px solid rgba(184,111,50,.25);
+  }
+  .nav-inner{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .logo{
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:1.35rem;
+    letter-spacing:.14em;
+    color:var(--light-gold);
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .logo .mark{
+    width:9px; height:9px;
+    background:var(--burnt-orange);
+    transform:rotate(45deg);
+    box-shadow:0 0 12px 2px rgba(165,64,15,.7);
+  }
+  nav.primary-links{
+    display:flex;
+    gap:38px;
+    align-items:center;
+  }
+  nav.primary-links a{
+    font-size:.92rem;
+    color:var(--light-gold);
+    opacity:.82;
+    position:relative;
+    padding-bottom:4px;
+    transition:opacity .3s var(--ease);
+  }
+  nav.primary-links a::after{
+    content:'';
+    position:absolute; left:0; bottom:0;
+    width:0; height:1px;
+    background:var(--bronze);
+    transition:width .35s var(--ease);
+  }
+  nav.primary-links a:hover{ opacity:1; }
+  nav.primary-links a:hover::after{ width:100%; }
+  nav.primary-links .nav-cta{
+    padding:10px 22px;
+    border:1px solid var(--bronze);
+    opacity:1;
+  }
+  nav.primary-links .nav-cta::after{ display:none; }
+  nav.primary-links .nav-cta:hover{ background:rgba(184,111,50,.14); }
+
+  .menu-toggle{
+    display:none;
+    background:none;
+    border:1px solid var(--dark-brown);
+    width:42px; height:42px;
+    align-items:center;
+    justify-content:center;
+    color:var(--light-gold);
+  }
+  .menu-toggle svg{ width:18px; height:18px; }
+
+  .mobile-panel{
+    position:fixed;
+    inset:0 0 0 auto;
+    width:min(78vw,320px);
+    height:100vh;
+    background:var(--deep-black);
+    border-left:1px solid var(--dark-brown);
+    transform:translateX(100%);
+    transition:transform .45s var(--ease);
+    z-index:600;
+    padding:100px 34px 40px;
+    display:flex;
+    flex-direction:column;
+    gap:26px;
+  }
+  .mobile-panel.open{ transform:translateX(0); }
+  .mobile-panel a{
+    font-family:var(--font-display);
+    font-size:1.4rem;
+    color:var(--light-gold);
+  }
+  .mobile-panel .close-panel{
+    position:absolute;
+    top:26px; right:26px;
+    background:none;
+    border:none;
+    color:var(--light-gold);
+    width:36px;height:36px;
+  }
+  .scrim{
+    position:fixed; inset:0;
+    background:rgba(0,0,0,.6);
+    opacity:0; pointer-events:none;
+    transition:opacity .4s var(--ease);
+    z-index:550;
+  }
+  .scrim.show{ opacity:1; pointer-events:auto; }
+
+  /* ===================== HERO ===================== */
+  .hero{
+    position:relative;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    overflow:hidden;
+    background:
+      radial-gradient(ellipse 60% 50% at 50% 0%, rgba(126,17,11,.35), transparent 65%),
+      radial-gradient(ellipse 50% 45% at 15% 85%, rgba(54,0,2,.55), transparent 60%),
+      radial-gradient(ellipse 50% 45% at 85% 85%, rgba(58,11,8,.5), transparent 60%),
+      var(--black);
+  }
+  .hero::before{
+    /* film grain */
+    content:'';
+    position:absolute; inset:0;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/></svg>");
+    mix-blend-mode:overlay;
+    opacity:.5;
+    pointer-events:none;
+  }
+  .curtain-fold{
+    position:absolute;
+    top:0; bottom:0;
+    width:14%;
+    background:repeating-linear-gradient(90deg,
+      var(--deep-burgundy) 0px, var(--dark-crimson) 18px, var(--deep-red) 36px, var(--dark-brown) 54px);
+    opacity:.55;
+    filter:blur(.3px);
+  }
+  .curtain-fold.left{ left:0; mask-image:linear-gradient(90deg, black, transparent); }
+  .curtain-fold.right{ right:0; mask-image:linear-gradient(270deg, black, transparent); }
+
+  .spotlight{
+    position:absolute;
+    top:-10%;
+    width:32%;
+    height:130%;
+    background:conic-gradient(from 180deg at 50% 0%, transparent 40%, rgba(236,193,139,.06) 50%, transparent 60%);
+    animation:sway 9s ease-in-out infinite;
+    pointer-events:none;
+  }
+  .spotlight.s1{ left:8%; animation-delay:0s; }
+  .spotlight.s2{ left:60%; animation-delay:2.4s; }
+  @keyframes sway{
+    0%,100%{ transform:rotate(-4deg); opacity:.7; }
+    50%{ transform:rotate(4deg); opacity:1; }
+  }
+
+  .hero-content{
+    position:relative;
+    z-index:2;
+    text-align:center;
+    margin:0 auto;
+    max-width:760px;
+    padding:160px 32px 100px;
+  }
+  .hero-content .kicker{
+    font-family:var(--font-display);
+    font-style:italic;
+    color:var(--bronze);
+    font-size:1.05rem;
+    letter-spacing:.05em;
+    margin-bottom:18px;
+    display:block;
+  }
+  .hero-content h1{
+    font-size:clamp(3rem,8vw,5.6rem);
+    line-height:1.02;
+    letter-spacing:.02em;
+    margin-bottom:22px;
+    text-shadow:0 20px 60px rgba(0,0,0,.6);
+  }
+  .hero-content .tagline{
+    font-family:var(--font-display);
+    font-style:italic;
+    font-size:clamp(1.2rem,2.4vw,1.6rem);
+    color:var(--light-gold);
+    opacity:.92;
+    margin-bottom:20px;
+  }
+  .hero-content p.desc{
+    font-size:1rem;
+    color:var(--light-gold);
+    opacity:.7;
+    max-width:520px;
+    margin:0 auto 40px;
+  }
+  .hero-actions{
+    display:flex;
+    gap:18px;
+    justify-content:center;
+    flex-wrap:wrap;
+  }
+
+  .hero-scroll-cue{
+    position:absolute;
+    bottom:34px; left:50%;
+    transform:translateX(-50%);
+    z-index:2;
+    width:1px; height:46px;
+    background:linear-gradient(180deg, var(--bronze), transparent);
+  }
+  .hero-scroll-cue::after{
+    content:'';
+    position:absolute; top:0; left:-2px;
+    width:5px; height:5px;
+    background:var(--light-gold);
+    border-radius:50%;
+    animation:cue 2.4s ease-in-out infinite;
+  }
+  @keyframes cue{
+    0%{ top:0; opacity:1; }
+    90%{ opacity:0; }
+    100%{ top:40px; opacity:0; }
+  }
+
+  /* ===================== SECTIONS ===================== */
+  section{ position:relative; padding:120px 0; }
+  .section-head{
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:24px;
+    margin-bottom:56px;
+    flex-wrap:wrap;
+  }
+  .section-head h2{ font-size:clamp(2.2rem,4vw,3rem); }
+  .section-head .sub{
+    max-width:420px;
+    font-size:.95rem;
+    opacity:.65;
+  }
+
+  #seasons{ background:var(--deep-black); }
+
+  .season-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:30px;
+  }
+
+  .season-card{
+    position:relative;
+    background:linear-gradient(160deg, var(--deep-red), var(--black) 70%);
+    border:1px solid var(--dark-brown);
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+    transition:transform .5s var(--ease), border-color .5s var(--ease), box-shadow .5s var(--ease);
+  }
+  .season-card:hover{
+    transform:translateY(-8px);
+    border-color:var(--bronze);
+    box-shadow:0 30px 60px -25px rgba(0,0,0,.8);
+  }
+  .season-cover{
+    position:relative;
+    height:220px;
+    display:flex;
+    align-items:flex-end;
+    padding:20px;
+    overflow:hidden;
+    background:
+      radial-gradient(circle at 30% 20%, rgba(236,193,139,.14), transparent 55%),
+      linear-gradient(155deg, var(--dark-crimson), var(--deep-burgundy) 55%, var(--black));
+  }
+  .season-cover .ghost-num{
+    position:absolute;
+    right:-10px; top:-30px;
+    font-family:var(--font-display);
+    font-size:9rem;
+    font-weight:700;
+    color:rgba(236,193,139,.08);
+    line-height:1;
+    user-select:none;
+  }
+  .season-cover .status-pill{
+    position:absolute;
+    top:16px; left:16px;
+    font-size:.72rem;
+    padding:6px 12px;
+    border:1px solid var(--bronze);
+    background:rgba(2,1,0,.55);
+    letter-spacing:.04em;
+  }
+  .status-pill.coming{ border-color:var(--dark-brown); color:var(--bronze); }
+  .status-pill.published{ border-color:var(--burnt-orange); color:var(--light-gold); }
+  .season-cover .lock-icon{
+    position:absolute;
+    top:16px; right:16px;
+    width:30px; height:30px;
+    border:1px solid var(--bronze);
+    background:rgba(2,1,0,.55);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .season-cover .lock-icon svg{ width:14px; height:14px; }
+  .season-cover .cover-title{
+    position:relative;
+    font-family:var(--font-display);
+    font-size:1.5rem;
+    z-index:1;
+  }
+  .season-body{
+    padding:26px 24px 28px;
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    flex:1;
+  }
+  .season-body .season-number{
+    font-family:var(--font-display);
+    font-style:italic;
+    color:var(--bronze);
+    font-size:.95rem;
+  }
+  .season-body p.desc{
+    font-size:.92rem;
+    opacity:.72;
+    flex:1;
+  }
+  .season-meta{
+    display:flex;
+    justify-content:space-between;
+    font-size:.82rem;
+    opacity:.65;
+    border-top:1px solid var(--dark-brown);
+    padding-top:14px;
+  }
+  .season-meta .price{ color:var(--light-gold); opacity:1; font-family:var(--font-display); font-size:1.05rem; }
+  .season-body .view-btn{ width:100%; margin-top:6px; }
+
+  /* ===================== SEASON VIEW ===================== */
+  #season-view{
+    background:var(--black);
+    display:none;
+  }
+  #season-view.open{ display:block; }
+  .back-link{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    font-size:.88rem;
+    color:var(--bronze);
+    margin-bottom:34px;
+    background:none;
+    border:none;
+    padding:0;
+  }
+  .back-link svg{ width:15px; height:15px; }
+  .back-link:hover{ color:var(--light-gold); }
+
+  .season-view-head{
+    display:grid;
+    grid-template-columns:1.1fr 1fr;
+    gap:60px;
+    margin-bottom:70px;
+    align-items:center;
+  }
+  .season-view-cover{
+    position:relative;
+    height:340px;
+    background:
+      radial-gradient(circle at 70% 30%, rgba(236,193,139,.12), transparent 55%),
+      linear-gradient(160deg, var(--dark-crimson), var(--deep-burgundy) 60%, var(--black));
+    border:1px solid var(--dark-brown);
+    display:flex;
+    align-items:flex-end;
+    padding:26px;
+  }
+  .season-view-cover .ghost-num{
+    position:absolute; left:20px; top:-20px;
+    font-family:var(--font-display);
+    font-size:8rem;
+    color:rgba(236,193,139,.09);
+  }
+  .season-view-info .season-number{
+    font-family:var(--font-display);
+    font-style:italic;
+    color:var(--bronze);
+    display:block;
+    margin-bottom:10px;
+  }
+  .season-view-info h2{ font-size:clamp(2rem,4vw,3rem); margin-bottom:16px; }
+  .season-view-info p.desc{ opacity:.72; margin-bottom:26px; max-width:480px; }
+  .season-view-facts{
+    display:flex;
+    gap:36px;
+    flex-wrap:wrap;
+  }
+  .season-view-facts div{ font-size:.82rem; opacity:.6; }
+  .season-view-facts strong{
+    display:block;
+    font-family:var(--font-display);
+    font-size:1.2rem;
+    color:var(--light-gold);
+    opacity:1;
+    font-style:normal;
+  }
+
+  .production-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:26px;
+  }
+  .production-card{
+    background:var(--deep-black);
+    border:1px solid var(--dark-brown);
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+    transition:border-color .4s var(--ease), transform .4s var(--ease);
+  }
+  .production-card:hover{ border-color:var(--bronze); transform:translateY(-5px); }
+  .production-cover{
+    height:150px;
+    position:relative;
+    background:linear-gradient(150deg, var(--dark-brown), var(--deep-red) 70%);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .production-cover svg{ width:34px; height:34px; opacity:.55; }
+  .production-cover .duration-tag{
+    position:absolute; bottom:10px; right:10px;
+    font-size:.72rem;
+    background:rgba(2,1,0,.7);
+    padding:3px 9px;
+    border:1px solid var(--dark-brown);
+  }
+  .production-body{
+    padding:20px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    flex:1;
+  }
+  .production-body h4{ font-size:1.15rem; }
+  .production-body p{ font-size:.85rem; opacity:.65; flex:1; }
+  .production-body .watch-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    border-top:1px solid var(--dark-brown);
+    padding-top:14px;
+    font-size:.78rem;
+    opacity:.6;
+  }
+  .watch-btn{
+    display:inline-flex; align-items:center; gap:8px;
+    background:none; border:1px solid var(--bronze); color:var(--light-gold);
+    padding:9px 16px; font-size:.82rem;
+  }
+  .watch-btn:hover{ background:rgba(184,111,50,.14); }
+  .watch-btn svg{ width:12px; height:12px; }
+
+  .empty-state{
+    text-align:center;
+    padding:70px 20px;
+    border:1px dashed var(--dark-brown);
+  }
+  .empty-state h4{ font-size:1.4rem; margin-bottom:10px; }
+  .empty-state p{ opacity:.6; font-size:.92rem; }
+  .empty-state.error{ border-color:var(--dark-red); }
+
+  /* ===================== SKELETON LOADERS ===================== */
+  @keyframes skeletonPulse{ 0%,100%{ opacity:.55; } 50%{ opacity:1; } }
+  .skeleton-card{
+    background:linear-gradient(160deg,var(--deep-red),var(--deep-burgundy));
+    border:1px solid var(--dark-brown);
+    overflow:hidden;
+  }
+  .skeleton-cover{ aspect-ratio:16/10; background:var(--deep-black); animation:skeletonPulse 1.6s ease-in-out infinite; }
+  .skeleton-line{
+    height:12px; margin:18px 20px; border-radius:2px;
+    background:var(--dark-brown);
+    animation:skeletonPulse 1.6s ease-in-out infinite;
+  }
+  .skeleton-line.short{ width:40%; }
+  .skeleton-line.long{ width:78%; }
+
+  /* ===================== ABOUT ===================== */
+  #about{ background:var(--deep-black); }
+  .about-grid{
+    display:grid;
+    grid-template-columns:.9fr 1.1fr;
+    gap:60px;
+    align-items:center;
+  }
+  .about-frame{
+    position:relative;
+    height:340px;
+    border:1px solid var(--dark-brown);
+    background:
+      radial-gradient(circle at 30% 70%, rgba(165,64,15,.18), transparent 55%),
+      linear-gradient(150deg, var(--deep-burgundy), var(--black) 70%);
+  }
+  .about-frame::after{
+    content:'';
+    position:absolute; inset:16px;
+    border:1px solid rgba(184,111,50,.4);
+  }
+  .about-copy p{ opacity:.72; margin-bottom:18px; max-width:520px; }
+  .about-copy .signature{
+    font-family:var(--font-display);
+    font-style:italic;
+    color:var(--bronze);
+    margin-top:24px;
+  }
+
+  /* ===================== FOOTER ===================== */
+  footer{
+    background:var(--black);
+    border-top:1px solid var(--dark-brown);
+    padding:70px 0 30px;
+  }
+  .footer-top{
+    display:flex;
+    justify-content:space-between;
+    gap:40px;
+    flex-wrap:wrap;
+    margin-bottom:50px;
+  }
+  .footer-brand .logo{ margin-bottom:10px; }
+  .footer-brand p{ opacity:.6; font-size:.9rem; max-width:280px; }
+  .footer-links{ display:flex; gap:60px; flex-wrap:wrap; }
+  .footer-col h5{
+    font-family:var(--font-display);
+    font-size:1.05rem;
+    color:var(--bronze);
+    margin-bottom:16px;
+    font-weight:600;
+  }
+  .footer-col a{
+    display:block;
+    font-size:.9rem;
+    opacity:.7;
+    margin-bottom:10px;
+  }
+  .footer-col a:hover{ opacity:1; color:var(--light-gold); }
+  .footer-bottom{
+    border-top:1px solid var(--dark-brown);
+    padding-top:24px;
+    display:flex;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:12px;
+    font-size:.8rem;
+    opacity:.5;
+  }
+
+  /* ===================== MODAL (ACCESS CODE) ===================== */
+  .modal-overlay{
+    position:fixed; inset:0;
+    background:rgba(2,1,0,.82);
+    backdrop-filter:blur(6px);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:800;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .4s var(--ease);
+    padding:20px;
+  }
+  .modal-overlay.open{ opacity:1; pointer-events:auto; }
+  .modal-box{
+    background:linear-gradient(160deg, var(--deep-red), var(--deep-black) 70%);
+    border:1px solid var(--bronze);
+    width:100%;
+    max-width:440px;
+    padding:44px 38px;
+    position:relative;
+    transform:translateY(16px) scale(.98);
+    transition:transform .45s var(--ease);
+  }
+  .modal-overlay.open .modal-box{ transform:translateY(0) scale(1); }
+  .modal-close{
+    position:absolute; top:18px; right:18px;
+    background:none; border:none; color:var(--light-gold);
+    opacity:.6;
+    width:30px; height:30px;
+  }
+  .modal-close:hover{ opacity:1; }
+  .modal-box h3{ font-size:1.9rem; margin-bottom:10px; }
+  .modal-box p.hint{ opacity:.6; font-size:.88rem; margin-bottom:24px; }
+  .field-label{
+    display:block;
+    font-size:.8rem;
+    opacity:.65;
+    margin-bottom:8px;
+  }
+  .code-input{
+    width:100%;
+    background:rgba(0,0,0,.4);
+    border:1px solid var(--dark-brown);
+    color:var(--light-gold);
+    font-family:var(--font-body);
+    font-size:1.05rem;
+    letter-spacing:.08em;
+    padding:14px 16px;
+    margin-bottom:8px;
+    transition:border-color .3s var(--ease);
+  }
+  .code-input:focus{ border-color:var(--bronze); outline:none; }
+  .code-input::placeholder{ color:rgba(236,193,139,.35); letter-spacing:.05em; }
+  .field-example{ font-size:.76rem; opacity:.4; margin-bottom:22px; }
+  .modal-box .btn{ width:100%; }
+  .access-note{
+    margin-top:20px;
+    font-size:.76rem;
+    opacity:.4;
+    border-top:1px solid var(--dark-brown);
+    padding-top:16px;
+  }
+  .form-msg{
+    font-size:.84rem;
+    margin-top:12px;
+    min-height:18px;
+  }
+  .form-msg.error{ color:#e78b7c; }
+  .form-msg.success{ color:var(--light-gold); }
+
+  /* ===================== VIDEO VIEWER ===================== */
+  .video-overlay{
+    position:fixed; inset:0;
+    background:var(--black);
+    z-index:900;
+    display:none;
+    flex-direction:column;
+    overflow-y:auto;
+  }
+  .video-overlay.open{ display:flex; }
+  .video-topbar{
+    display:flex;
+    align-items:center;
+    gap:16px;
+    padding:20px 28px;
+    border-bottom:1px solid var(--dark-brown);
+  }
+  .video-topbar .back-link{ margin:0; }
+  .video-stage{
+    position:relative;
+    width:100%;
+    background:#000;
+    aspect-ratio:16/9;
+    max-height:70vh;
+    overflow:hidden;
+  }
+  .video-stage video{
+    width:100%; height:100%;
+    object-fit:contain;
+    background:#000;
+  }
+  .watermark{
+    position:absolute;
+    top:10%; left:8%;
+    color:rgba(236,193,139,.5);
+    font-family:var(--font-display);
+    font-style:italic;
+    font-size:.95rem;
+    text-align:center;
+    line-height:1.3;
+    pointer-events:none;
+    transition:top 6s linear, left 6s linear;
+    text-shadow:0 2px 10px rgba(0,0,0,.6);
+    user-select:none;
+  }
+  .watermark .wm-viewer{ font-size:.72rem; opacity:.85; }
+  .watermark .wm-session{ font-size:.66rem; opacity:.7; letter-spacing:.05em; }
+
+  .player-controls{
+    display:flex;
+    align-items:center;
+    gap:16px;
+    padding:14px 18px;
+    background:linear-gradient(180deg, rgba(0,0,0,0), rgba(0,0,0,.85));
+    position:absolute;
+    left:0; right:0; bottom:0;
+  }
+  .ctrl-btn{
+    background:none; border:none;
+    color:var(--light-gold);
+    width:36px; height:36px;
+    display:flex; align-items:center; justify-content:center;
+    opacity:.85;
+  }
+  .ctrl-btn:hover{ opacity:1; }
+  .ctrl-btn svg{ width:18px; height:18px; }
+  .progress-wrap{
+    flex:1;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-size:.72rem;
+    opacity:.8;
+  }
+  input[type=range]{
+    -webkit-appearance:none;
+    appearance:none;
+    height:3px;
+    background:rgba(236,193,139,.25);
+    border-radius:2px;
+    flex:1;
+    cursor:pointer;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;
+    width:12px; height:12px;
+    border-radius:50%;
+    background:var(--light-gold);
+    box-shadow:0 0 8px rgba(236,193,139,.6);
+  }
+  input[type=range]#volume-range{ max-width:80px; flex:none; }
+
+  .video-info{
+    padding:32px 34px 60px;
+    max-width:800px;
+  }
+  .video-info .season-tag{
+    font-family:var(--font-display);
+    font-style:italic;
+    color:var(--bronze);
+    margin-bottom:10px;
+    display:block;
+  }
+  .video-info h2{ font-size:2rem; margin-bottom:14px; }
+  .video-info p.desc{ opacity:.7; margin-bottom:16px; }
+  .video-info .duration{ font-size:.85rem; opacity:.55; }
+
+  /* ===================== TOAST ===================== */
+  #toast-container{
+    position:fixed;
+    bottom:26px; left:50%;
+    transform:translateX(-50%);
+    z-index:1000;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    align-items:center;
+    pointer-events:none;
+    width:100%;
+    padding:0 20px;
+  }
+  .toast{
+    background:var(--deep-black);
+    border:1px solid var(--bronze);
+    color:var(--light-gold);
+    padding:13px 22px;
+    font-size:.85rem;
+    box-shadow:0 20px 40px -18px rgba(0,0,0,.8);
+    opacity:0;
+    transform:translateY(10px);
+    transition:opacity .35s var(--ease), transform .35s var(--ease);
+    max-width:360px;
+    text-align:center;
+  }
+  .toast.show{ opacity:1; transform:translateY(0); }
+  .toast.error{ border-color:#a5400f; }
+
+  /* ===================== RESPONSIVE ===================== */
+  @media (max-width:960px){
+    .season-grid, .production-grid{ grid-template-columns:repeat(2,1fr); }
+    .season-view-head, .about-grid{ grid-template-columns:1fr; }
+    .season-view-cover, .about-frame{ height:260px; }
+  }
+  @media (max-width:880px){
+    nav.primary-links{ display:none; }
+    .menu-toggle{ display:flex; }
+  }
+  @media (max-width:600px){
+    .container{ padding:0 22px; }
+    section{ padding:80px 0; }
+    .season-grid, .production-grid{ grid-template-columns:1fr; }
+    .hero-content{ padding:140px 20px 80px; }
+    .section-head{ flex-direction:column; align-items:flex-start; }
+    .footer-top{ flex-direction:column; gap:34px; }
+    .video-info{ padding:26px 20px 50px; }
+    .player-controls{ flex-wrap:wrap; gap:10px; padding:12px; }
+    .progress-wrap{ order:3; width:100%; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===================== NAV ===================== -->
+<header class="site-nav" id="siteNav">
+  <div class="container nav-inner">
+    <a href="#home" class="logo"><span class="mark"></span> Thyatira Team</a>
+    <nav class="primary-links">
+      <a href="#home">Home</a>
+      <a href="#seasons">Seasons</a>
+      <a href="#about">About</a>
+      <a href="#" class="nav-cta" id="navEnterCode">Enter Code</a>
+    </nav>
+    <button class="menu-toggle" id="menuToggle" aria-label="Open menu" aria-expanded="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+  </div>
+</header>
+
+<div class="scrim" id="scrim"></div>
+<aside class="mobile-panel" id="mobilePanel" aria-hidden="true">
+  <button class="close-panel" id="closePanel" aria-label="Close menu">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><line x1="5" y1="5" x2="19" y2="19"/><line x1="19" y1="5" x2="5" y2="19"/></svg>
+  </button>
+  <a href="#home" class="mobile-link">Home</a>
+  <a href="#seasons" class="mobile-link">Seasons</a>
+  <a href="#about" class="mobile-link">About</a>
+  <a href="#" id="mobileEnterCode" class="mobile-link">Enter Code</a>
+</aside>
+
+<main>
+  <!-- ===================== HERO ===================== -->
+  <section class="hero" id="home">
+    <div class="curtain-fold left"></div>
+    <div class="curtain-fold right"></div>
+    <div class="spotlight s1"></div>
+    <div class="spotlight s2"></div>
+    <div class="hero-content">
+      <span class="kicker">A digital stage for a theater team</span>
+      <h1>Thyatira Team</h1>
+      <p class="tagline">Experience the Stage Beyond the Stage.</p>
+      <p class="desc">A premium digital space for experiencing Thyatira Team theatrical productions, wherever the audience happens to be sitting.</p>
+      <div class="hero-actions">
+        <a href="#seasons" class="btn btn-primary"><span class="btn-label">Explore Seasons</span></a>
+        <button class="btn btn-outline" id="heroEnterCode"><span class="btn-label">Enter Access Code</span></button>
+      </div>
+    </div>
+    <div class="hero-scroll-cue"></div>
+  </section>
+
+  <!-- ===================== SEASONS ===================== -->
+  <section id="seasons">
+    <div class="container">
+      <div class="section-head">
+        <div>
+          <h2>Seasons</h2>
+        </div>
+        <p class="sub">Each season gathers a handful of productions staged and filmed for the Thyatira Team viewer.</p>
+      </div>
+      <div class="season-grid" id="seasonGrid"></div>
+    </div>
+  </section>
+
+  <!-- ===================== SEASON VIEW ===================== -->
+  <section id="season-view">
+    <div class="container">
+      <button class="back-link" id="backToSeasons">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        Back to Seasons
+      </button>
+      <div id="seasonViewContent"></div>
+    </div>
+  </section>
+
+  <!-- ===================== ABOUT ===================== -->
+  <section id="about">
+    <div class="container about-grid">
+      <div class="about-frame"></div>
+      <div class="about-copy">
+        <div class="eyebrow-rule"><span class="line"></span></div>
+        <h2 style="margin-bottom:20px;">About Thyatira Team</h2>
+        <p>Thyatira Team is a theater group that writes, rehearses, and stages original productions, then brings them to a wider audience through this viewer. Every season is filmed and produced with the same care given to the performance itself.</p>
+        <p>This site exists so the people who support the team can watch from anywhere — a season pass and an access code stand in for a seat in the room.</p>
+        <p class="signature">— The Thyatira Team</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- ===================== FOOTER ===================== -->
+<footer>
+  <div class="container">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <div class="logo"><span class="mark"></span> Thyatira Team</div>
+        <p>Theater. Stories. Experience.</p>
+      </div>
+      <div class="footer-links">
+        <div class="footer-col">
+          <h5>Explore</h5>
+          <a href="#home">Home</a>
+          <a href="#seasons">Seasons</a>
+          <a href="#about">About</a>
+        </div>
+        <div class="footer-col">
+          <h5>Access</h5>
+          <a href="#" id="footerEnterCode">Enter Access Code</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© <span id="year"></span> Thyatira Team. All rights reserved.</span>
+      <span>Built for the stage, brought to the screen.</span>
+    </div>
+  </div>
+</footer>
+
+<!-- ===================== ACCESS CODE MODAL ===================== -->
+<div class="modal-overlay" id="accessModal" role="dialog" aria-modal="true" aria-labelledby="accessModalTitle">
+  <div class="modal-box">
+    <button class="modal-close" id="closeAccessModal" aria-label="Close">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><line x1="5" y1="5" x2="19" y2="19"/><line x1="19" y1="5" x2="5" y2="19"/></svg>
+    </button>
+    <h3 id="accessModalTitle">Unlock Your Season</h3>
+    <p class="hint">Enter the access code from your season pass to unlock its productions.</p>
+    <label class="field-label" for="accessInput">Enter your Season Access Code</label>
+    <input type="text" id="accessInput" class="code-input" placeholder="THY-XXXX-XXXX" autocomplete="off" spellcheck="false">
+    <p class="field-example">Example: THY-7K9P-X2LM</p>
+    <button class="btn btn-primary" id="verifyAccessBtn" style="width:100%;">
+      <span class="spinner"></span><span class="btn-label">Verify Access</span>
+    </button>
+    <p class="form-msg" id="accessMsg" role="status" aria-live="polite"></p>
+    <p class="access-note">Your code is checked securely on our server and is never stored in this browser.</p>
+  </div>
+</div>
+
+<!-- ===================== VIDEO VIEWER ===================== -->
+<div class="video-overlay" id="videoOverlay" role="dialog" aria-modal="true" aria-label="Video viewer">
+  <div class="video-topbar">
+    <button class="back-link" id="closeVideo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      Back
+    </button>
+  </div>
+  <div class="video-stage" id="videoStage">
+    <video id="playerVideo" playsinline preload="metadata" oncontextmenu="return false;"></video>
+    <div class="watermark" id="watermark">
+      Thyatira Team<br><span class="wm-viewer" id="watermarkViewer">Viewer: ————</span><br><span class="wm-session" id="watermarkSession"></span>
+    </div>
+    <div class="player-controls">
+      <button class="ctrl-btn" id="playPauseBtn" aria-label="Play">
+        <svg id="playIcon" viewBox="0 0 24 24" fill="currentColor"><polygon points="6,4 20,12 6,20"/></svg>
+        <svg id="pauseIcon" viewBox="0 0 24 24" fill="currentColor" style="display:none;"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+      </button>
+      <div class="progress-wrap">
+        <span id="curTime">0:00</span>
+        <input type="range" id="progressRange" min="0" max="100" value="0" aria-label="Seek">
+        <span id="durTime">0:00</span>
+      </div>
+      <button class="ctrl-btn" id="muteBtn" aria-label="Mute">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><polygon points="4,9 8,9 12,5 12,19 8,15 4,15"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg>
+      </button>
+      <input type="range" id="volumeRange" min="0" max="100" value="100" aria-label="Volume">
+      <button class="ctrl-btn" id="fullscreenBtn" aria-label="Fullscreen">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="video-info">
+    <span class="season-tag" id="videoSeasonTag"></span>
+    <h2 id="videoTitle"></h2>
+    <p class="desc" id="videoDesc"></p>
+    <span class="duration" id="videoDuration"></span>
+  </div>
+</div>
+
+<div id="toast-container" aria-live="polite"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ===================== API CONFIG =====================
+     All real content (seasons, productions, access codes, media)
+     comes from the backend only — nothing is hardcoded here.
+     Fill in API_BASE once the backend is deployed (leave "" for
+     same-origin). Every call below is written and wired; it will
+     simply fail gracefully with a friendly toast until the actual
+     endpoints exist.
+  ========================================================= */
+  var API_BASE = ""; // e.g. "https://api.thyatirateam.com" — leave empty for same-origin
+  var API = {
+    seasons:            function(){ return API_BASE + "/api/seasons"; },
+    seasonDetail:       function(id){ return API_BASE + "/api/seasons/" + encodeURIComponent(id); },
+    verifyAccess:       function(){ return API_BASE + "/api/access/verify"; },
+    createViewSession:  function(){ return API_BASE + "/api/viewing/session"; },
+    media:              function(performanceId){ return API_BASE + "/api/media/" + encodeURIComponent(performanceId); }
+  };
+
+  /* fetchJSON: small wrapper — always sends/receives the auth
+     session via secure HTTP-only cookie (credentials:"include"),
+     never via a token stored in this file or in browser storage. */
+  function fetchJSON(url, options){
+    options = options || {};
+    options.credentials = "include";
+    options.headers = Object.assign({ "Accept":"application/json" }, options.headers || {});
+    return fetch(url, options).then(function(res){
+      return res.json().catch(function(){ return {}; }).then(function(body){
+        if (!res.ok){
+          var err = new Error(body && body.message ? body.message : "Request failed");
+          err.status = res.status;
+          err.body = body;
+          throw err;
+        }
+        return body;
+      });
+    });
+  }
+
+  /* ===================== STATE =====================
+     No demo data, no fake access codes, no placeholder media
+     links. Everything below is populated from API responses only. */
+  var seasons = [];
+  var unlockedSeasons = {};   // { [seasonId]: true } — set only after a real "Access Granted" response
+  var viewerLabel = null;     // masked viewer id, comes back from /api/access/verify
+
+  /* ===================== UTIL ===================== */
+  function qs(sel, ctx){ return (ctx||document).querySelector(sel); }
+  function qsa(sel, ctx){ return Array.prototype.slice.call((ctx||document).querySelectorAll(sel)); }
+
+  function showToast(message, type){
+    var container = qs("#toast-container");
+    var el = document.createElement("div");
+    el.className = "toast" + (type === "error" ? " error" : "");
+    el.textContent = message;
+    container.appendChild(el);
+    requestAnimationFrame(function(){ el.classList.add("show"); });
+    setTimeout(function(){
+      el.classList.remove("show");
+      setTimeout(function(){ el.remove(); }, 400);
+    }, 3200);
+  }
+
+  function seasonById(id){
+    for (var i=0;i<seasons.length;i++){ if (seasons[i].id === id) return seasons[i]; }
+    return null;
+  }
+
+  /* ===================== NAV BEHAVIOR ===================== */
+  var siteNav = qs("#siteNav");
+  window.addEventListener("scroll", function(){
+    if (window.scrollY > 40) siteNav.classList.add("scrolled");
+    else siteNav.classList.remove("scrolled");
+  });
+
+  var mobilePanel = qs("#mobilePanel");
+  var scrim = qs("#scrim");
+  var menuToggle = qs("#menuToggle");
+
+  function openMobileMenu(){
+    mobilePanel.classList.add("open");
+    scrim.classList.add("show");
+    mobilePanel.setAttribute("aria-hidden","false");
+    menuToggle.setAttribute("aria-expanded","true");
+  }
+  function closeMobileMenu(){
+    mobilePanel.classList.remove("open");
+    scrim.classList.remove("show");
+    mobilePanel.setAttribute("aria-hidden","true");
+    menuToggle.setAttribute("aria-expanded","false");
+  }
+  menuToggle.addEventListener("click", openMobileMenu);
+  qs("#closePanel").addEventListener("click", closeMobileMenu);
+  scrim.addEventListener("click", function(){ closeMobileMenu(); closeAccessModal(); closeVideo(); });
+  qsa(".mobile-panel a").forEach(function(a){
+    a.addEventListener("click", function(e){
+      if (a.id === "mobileEnterCode"){ e.preventDefault(); closeMobileMenu(); openAccessModal(); }
+      else { closeMobileMenu(); }
+    });
+  });
+
+  /* ===================== FETCH SEASONS (from backend only) ===================== */
+  function renderSeasonSkeletons(count){
+    var grid = qs("#seasonGrid");
+    grid.innerHTML = "";
+    for (var i=0;i<count;i++){
+      var card = document.createElement("div");
+      card.className = "season-card skeleton-card";
+      card.innerHTML =
+        '<div class="skeleton-cover"></div>' +
+        '<div class="skeleton-line long"></div>' +
+        '<div class="skeleton-line short"></div>';
+      grid.appendChild(card);
+    }
+  }
+
+  function fetchSeasons(){
+    renderSeasonSkeletons(3);
+    return fetchJSON(API.seasons())
+      .then(function(data){
+        seasons = Array.isArray(data) ? data : (data.seasons || []);
+        renderSeasons();
+      })
+      .catch(function(){
+        var grid = qs("#seasonGrid");
+        grid.innerHTML = "";
+        var empty = document.createElement("div");
+        empty.className = "empty-state error";
+        empty.innerHTML = "<h4>Something went wrong.</h4><p>Please try again in a moment.</p>";
+        grid.appendChild(empty);
+      });
+  }
+
+  /* ===================== RENDER SEASONS ===================== */
+  var lockSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="11" width="14" height="9" rx="1"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
+
+  function renderSeasons(){
+    var grid = qs("#seasonGrid");
+    grid.innerHTML = "";
+    if (!seasons.length){
+      var empty = document.createElement("div");
+      empty.className = "empty-state";
+      empty.innerHTML = "<h4>No seasons published yet</h4><p>Check back soon — new seasons appear here as soon as they're released.</p>";
+      grid.appendChild(empty);
+      return;
+    }
+    seasons.forEach(function(s){
+      var isLocked = s.locked && !unlockedSeasons[s.id];
+      var pillClass = s.status === "Coming Soon" ? "coming" : "published";
+      var card = document.createElement("div");
+      card.className = "season-card";
+      var cover = document.createElement("div");
+      cover.className = "season-cover";
+      var ghost = document.createElement("span");
+      ghost.className = "ghost-num";
+      ghost.textContent = String(s.id).padStart(2,"0");
+      cover.appendChild(ghost);
+      var pill = document.createElement("span");
+      pill.className = "status-pill " + pillClass;
+      pill.textContent = s.status;
+      cover.appendChild(pill);
+      if (isLocked){
+        var lock = document.createElement("span");
+        lock.className = "lock-icon";
+        lock.innerHTML = lockSvg;
+        cover.appendChild(lock);
+      }
+      var coverTitle = document.createElement("span");
+      coverTitle.className = "cover-title";
+      coverTitle.textContent = s.title;
+      cover.appendChild(coverTitle);
+
+      var body = document.createElement("div");
+      body.className = "season-body";
+      body.innerHTML =
+        '<span class="season-number">Season ' + s.number + '</span>' +
+        '<p class="desc">' + s.description + '</p>' +
+        '<div class="season-meta">' +
+          '<span>' + s.releaseDate + '</span>' +
+          '<span>' + (s.productions||[]).length + ((s.productions||[]).length===1?' production':' productions') + '</span>' +
+          '<span class="price">' + s.price + '</span>' +
+        '</div>';
+
+      var btn = document.createElement("button");
+      btn.className = "btn btn-outline view-btn";
+      btn.textContent = s.status === "Coming Soon" ? "Coming Soon" : "View Season";
+      if (s.status === "Coming Soon"){
+        btn.addEventListener("click", function(){
+          showToast("This season hasn't premiered yet — check back soon.");
+        });
+      } else {
+        btn.addEventListener("click", function(){ openSeasonView(s.id); });
+      }
+      body.appendChild(btn);
+
+      card.appendChild(cover);
+      card.appendChild(body);
+      grid.appendChild(card);
+    });
+  }
+
+  /* ===================== SEASON VIEW ===================== */
+  var seasonViewSection = qs("#season-view");
+  var seasonViewContent = qs("#seasonViewContent");
+
+  function renderSeasonView(s){
+    var isLocked = s.locked && !unlockedSeasons[s.id];
+    var productions = s.productions || [];
+
+    var head =
+      '<div class="season-view-head">' +
+        '<div class="season-view-cover"><span class="ghost-num">' + String(s.id).padStart(2,"0") + '</span></div>' +
+        '<div class="season-view-info">' +
+          '<span class="season-number">Season ' + s.number + (isLocked ? " · Locked" : "") + '</span>' +
+          '<h2>' + s.title + '</h2>' +
+          '<p class="desc">' + s.description + '</p>' +
+          '<div class="season-view-facts">' +
+            '<div><strong>' + s.releaseDate + '</strong>Release</div>' +
+            '<div><strong>' + s.price + '</strong>Price</div>' +
+            '<div><strong>' + productions.length + '</strong>Productions</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+
+    var productionsHtml;
+    if (productions.length === 0){
+      productionsHtml =
+        '<div class="empty-state">' +
+          '<h4>Nothing staged here yet</h4>' +
+          '<p>Productions for this season are still being rehearsed. Check back soon.</p>' +
+        '</div>';
+    } else {
+      productionsHtml = '<div class="production-grid">' + productions.map(function(p){
+        return (
+        '<div class="production-card">' +
+          '<div class="production-cover">' +
+            (isLocked
+              ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="5" y="11" width="14" height="9" rx="1"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>'
+              : '<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="6,4 20,12 6,20"/></svg>') +
+            '<span class="duration-tag">' + p.duration + '</span>' +
+          '</div>' +
+          '<div class="production-body">' +
+            '<h4>' + p.title + '</h4>' +
+            '<p>' + p.description + '</p>' +
+            '<div class="watch-row">' +
+              '<span>' + p.releaseDate + '</span>' +
+              '<button class="watch-btn" data-season="' + s.id + '" data-production="' + p.id + '">' +
+                (isLocked ? 'Unlock' : 'Watch Now') +
+              '</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>');
+      }).join("") + '</div>';
+    }
+
+    seasonViewContent.innerHTML = head + productionsHtml;
+
+    qsa(".watch-btn", seasonViewContent).forEach(function(btn){
+      btn.addEventListener("click", function(){
+        var seasonId = parseInt(btn.getAttribute("data-season"),10);
+        var prodId = parseInt(btn.getAttribute("data-production"),10);
+        var season = seasonById(seasonId);
+        if (season.locked && !unlockedSeasons[seasonId]){
+          showToast("Enter your access code to unlock Season " + season.number + ".");
+          openAccessModal();
+          return;
+        }
+        var production = (season.productions || []).filter(function(p){ return p.id === prodId; })[0];
+        if (production) openVideo(season, production);
+      });
+    });
+  }
+
+  function openSeasonView(id){
+    var cached = seasonById(id);
+    if (!cached) return;
+
+    seasonViewContent.innerHTML =
+      '<div class="skeleton-card"><div class="skeleton-cover"></div>' +
+      '<div class="skeleton-line long"></div><div class="skeleton-line short"></div></div>';
+    seasonViewSection.classList.add("open");
+    seasonViewSection.scrollIntoView({ behavior:"smooth", block:"start" });
+
+    // Full production list (especially for locked seasons) is authorized
+    // and returned by the backend per-season — never bundled into the
+    // public /api/seasons list.
+    fetchJSON(API.seasonDetail(id))
+      .then(function(full){
+        var idx = seasons.findIndex(function(x){ return x.id === id; });
+        var merged = Object.assign({}, cached, full);
+        if (idx > -1) seasons[idx] = merged;
+        renderSeasonView(merged);
+      })
+      .catch(function(){
+        renderSeasonView(cached); // fall back to what we already have (e.g. locked, no productions)
+      });
+  }
+
+  qs("#backToSeasons").addEventListener("click", function(){
+    seasonViewSection.classList.remove("open");
+    qs("#seasons").scrollIntoView({ behavior:"smooth", block:"start" });
+  });
+
+
+  /* ===================== ACCESS MODAL ===================== */
+  var accessModal = qs("#accessModal");
+  var accessInput = qs("#accessInput");
+  var accessMsg = qs("#accessMsg");
+  var verifyBtn = qs("#verifyAccessBtn");
+  var lastFocused = null;
+
+  function openAccessModal(){
+    lastFocused = document.activeElement;
+    accessModal.classList.add("open");
+    accessMsg.textContent = "";
+    accessMsg.className = "form-msg";
+    accessInput.value = "";
+    setTimeout(function(){ accessInput.focus(); }, 50);
+  }
+  function closeAccessModal(){
+    accessModal.classList.remove("open");
+    if (lastFocused) lastFocused.focus();
+  }
+  [qs("#navEnterCode"), qs("#heroEnterCode"), qs("#footerEnterCode")].forEach(function(el){
+    if (el) el.addEventListener("click", function(e){ e.preventDefault(); openAccessModal(); });
+  });
+  qs("#closeAccessModal").addEventListener("click", closeAccessModal);
+  accessModal.addEventListener("click", function(e){ if (e.target === accessModal) closeAccessModal(); });
+
+  /* Maps the backend's verification status to the message shown to the
+     viewer. The backend is the single source of truth for all of these —
+     nothing here is guessed or simulated on the frontend. */
+  var ACCESS_STATUS_MESSAGES = {
+    invalid:        "That code isn't recognized. Double-check and try again.",
+    expired:        "This code has expired. Please contact us for a new one.",
+    revoked:        "This code is no longer active.",
+    limit_reached:  "This code has reached its usage limit.",
+    device_limit:   "This code is already in use on another device.",
+    error:          "Something went wrong. Please try again."
+  };
+
+  function verifyCode(){
+    var raw = accessInput.value.trim().toUpperCase();
+    if (!raw){
+      accessMsg.textContent = "Enter a code to continue.";
+      accessMsg.className = "form-msg error";
+      return;
+    }
+    verifyBtn.classList.add("is-loading");
+    verifyBtn.disabled = true;
+    accessMsg.textContent = "";
+    accessMsg.className = "form-msg";
+
+    fetchJSON(API.verifyAccess(), {
+      method: "POST",
+      headers: { "Content-Type":"application/json" },
+      body: JSON.stringify({ code: raw })
+    })
+      .then(function(data){
+        // Expected success shape: { status:"granted", seasonId, viewerLabel }
+        if (data.status === "granted" && data.seasonId){
+          unlockedSeasons[data.seasonId] = true;
+          viewerLabel = data.viewerLabel || null;
+          accessMsg.textContent = "Access Granted";
+          accessMsg.className = "form-msg success";
+          var s = seasonById(data.seasonId);
+          showToast("Access Granted" + (s ? " — Season " + s.number + " unlocked." : "."));
+          renderSeasons();
+          setTimeout(function(){
+            closeAccessModal();
+            openSeasonView(data.seasonId);
+          }, 700);
+        } else {
+          accessMsg.textContent = ACCESS_STATUS_MESSAGES[data.status] || ACCESS_STATUS_MESSAGES.invalid;
+          accessMsg.className = "form-msg error";
+        }
+      })
+      .catch(function(){
+        accessMsg.textContent = ACCESS_STATUS_MESSAGES.error;
+        accessMsg.className = "form-msg error";
+      })
+      .then(function(){
+        verifyBtn.classList.remove("is-loading");
+        verifyBtn.disabled = false;
+      });
+  }
+  verifyBtn.addEventListener("click", verifyCode);
+  accessInput.addEventListener("keydown", function(e){ if (e.key === "Enter") verifyCode(); });
+
+  /* ===================== VIDEO VIEWER ===================== */
+  var videoOverlay = qs("#videoOverlay");
+  var videoEl = qs("#playerVideo");
+  var playPauseBtn = qs("#playPauseBtn");
+  var playIcon = qs("#playIcon");
+  var pauseIcon = qs("#pauseIcon");
+  var progressRange = qs("#progressRange");
+  var curTimeEl = qs("#curTime");
+  var durTimeEl = qs("#durTime");
+  var muteBtn = qs("#muteBtn");
+  var volumeRange = qs("#volumeRange");
+  var fullscreenBtn = qs("#fullscreenBtn");
+  var watermarkEl = qs("#watermark");
+  var watermarkTimer = null;
+
+  qs("#watermarkViewer").textContent = "Viewer: " + (viewerLabel || "————");
+
+  function fmtTime(sec){
+    if (!isFinite(sec)) return "0:00";
+    var m = Math.floor(sec/60);
+    var s = Math.floor(sec%60);
+    return m + ":" + (s < 10 ? "0"+s : s);
+  }
+
+  function moveWatermark(){
+    var top = 8 + Math.random()*70;
+    var left = 5 + Math.random()*70;
+    watermarkEl.style.top = top + "%";
+    watermarkEl.style.left = left + "%";
+  }
+
+  function openVideo(season, production){
+    qs("#videoSeasonTag").textContent = "Season " + season.number + " — " + season.title;
+    qs("#videoTitle").textContent = production.title;
+    qs("#videoDesc").textContent = production.description;
+    qs("#videoDuration").textContent = "Runtime: " + production.duration;
+
+    videoEl.removeAttribute("src");
+    videoOverlay.classList.add("open");
+    document.body.style.overflow = "hidden";
+    setPlayIcon(false);
+
+    // Open an authorized viewing session, then point the player at the
+    // protected media endpoint. The server checks the session cookie on
+    // every byte-range request — no signed URL or token is ever handled
+    // by this file, and nothing is ever loaded from a public/demo link.
+    fetchJSON(API.createViewSession(), {
+      method: "POST",
+      headers: { "Content-Type":"application/json" },
+      body: JSON.stringify({ productionId: production.id, seasonId: season.id })
+    })
+      .then(function(sessionData){
+        var sessionLabel = sessionData && sessionData.sessionLabel;
+        qs("#watermarkSession").textContent = sessionLabel ? "Session: " + sessionLabel : "";
+        videoEl.src = API.media(production.id);
+        videoEl.load();
+
+        moveWatermark();
+        clearInterval(watermarkTimer);
+        watermarkTimer = setInterval(moveWatermark, 6000);
+      })
+      .catch(function(){
+        showToast("This production is currently unavailable. Please try again shortly.", "error");
+        closeVideo();
+      });
+  }
+
+  function closeVideo(){
+    videoEl.pause();
+    videoEl.removeAttribute("src");
+    videoEl.load();
+    videoOverlay.classList.remove("open");
+    document.body.style.overflow = "";
+    clearInterval(watermarkTimer);
+  }
+  qs("#closeVideo").addEventListener("click", closeVideo);
+
+  function setPlayIcon(isPlaying){
+    playIcon.style.display = isPlaying ? "none" : "block";
+    pauseIcon.style.display = isPlaying ? "block" : "none";
+    playPauseBtn.setAttribute("aria-label", isPlaying ? "Pause" : "Play");
+  }
+  playPauseBtn.addEventListener("click", function(){
+    if (videoEl.paused){ videoEl.play(); } else { videoEl.pause(); }
+  });
+  videoEl.addEventListener("play", function(){ setPlayIcon(true); });
+  videoEl.addEventListener("pause", function(){ setPlayIcon(false); });
+  videoEl.addEventListener("error", function(){
+    if (!videoEl.getAttribute("src")) return; // ignore the reset in closeVideo()
+    showToast("Playback error — please try again.", "error");
+    closeVideo();
+  });
+
+  videoEl.addEventListener("loadedmetadata", function(){
+    durTimeEl.textContent = fmtTime(videoEl.duration);
+  });
+  videoEl.addEventListener("timeupdate", function(){
+    if (videoEl.duration){
+      progressRange.value = (videoEl.currentTime / videoEl.duration) * 100;
+      curTimeEl.textContent = fmtTime(videoEl.currentTime);
+    }
+  });
+  progressRange.addEventListener("input", function(){
+    if (videoEl.duration){
+      videoEl.currentTime = (progressRange.value/100) * videoEl.duration;
+    }
+  });
+
+  muteBtn.addEventListener("click", function(){
+    videoEl.muted = !videoEl.muted;
+    volumeRange.value = videoEl.muted ? 0 : (videoEl.volume*100);
+  });
+  volumeRange.addEventListener("input", function(){
+    videoEl.volume = volumeRange.value/100;
+    videoEl.muted = (videoEl.volume === 0);
+  });
+
+  fullscreenBtn.addEventListener("click", function(){
+    var stage = qs("#videoStage");
+    if (document.fullscreenElement){ document.exitFullscreen(); }
+    else if (stage.requestFullscreen){ stage.requestFullscreen(); }
+  });
+
+  /* ===================== KEYBOARD / ESC ===================== */
+  document.addEventListener("keydown", function(e){
+    if (e.key === "Escape"){
+      if (videoOverlay.classList.contains("open")) closeVideo();
+      else if (accessModal.classList.contains("open")) closeAccessModal();
+      else if (mobilePanel.classList.contains("open")) closeMobileMenu();
+    }
+  });
+
+  /* ===================== SECURITY UI (deterrence only, not real security) ===================== */
+  document.addEventListener("contextmenu", function(e){ e.preventDefault(); });
+  document.addEventListener("dragstart", function(e){ e.preventDefault(); });
+  document.addEventListener("keydown", function(e){
+    var key = (e.key || "").toLowerCase();
+    var ctrlOrCmd = e.ctrlKey || e.metaKey;
+    if (ctrlOrCmd && key === "s"){ e.preventDefault(); showToast("Saving is disabled on this page."); }
+    else if (ctrlOrCmd && key === "u"){ e.preventDefault(); showToast("Viewing source is disabled on this page."); }
+    else if (key === "f12"){ e.preventDefault(); showToast("Developer tools are disabled on this page."); }
+    else if (ctrlOrCmd && e.shiftKey && (key === "i" || key === "j" || key === "c")){
+      e.preventDefault(); showToast("Developer tools are disabled on this page.");
+    }
+  });
+  // Note: this is best-effort frontend deterrence only. It does not provide
+  // real protection — actual access control and content security will be
+  // implemented on the server in a later phase.
+
+  /* ===================== INIT ===================== */
+  qs("#year").textContent = new Date().getFullYear();
+  fetchSeasons();
+
+})();
+</script>
+</body>
+</html>
