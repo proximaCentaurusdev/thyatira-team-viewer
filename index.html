@@ -188,6 +188,7 @@
     cursor:not-allowed;
     transform:none !important;
   }
+  .btn-sm{ padding:10px 18px; font-size:.85rem; }
   .btn .spinner{ display:none; }
   .btn.is-loading .spinner{ display:inline-block; }
   .btn.is-loading .btn-label{ opacity:.75; }
@@ -899,18 +900,82 @@
     object-fit:contain;
     background:#000;
   }
-  .drive-frame{
+  /* YouTube IFrame Player API mounts its own iframe inside this div.
+     controls=0 in playerVars hides YouTube's own chrome so the
+     .player-controls bar below is the only visible control surface. */
+  .yt-mount{
+    position:absolute; inset:0;
     width:100%; height:100%;
-    border:0;
     background:#000;
   }
-  .drive-frame-empty{
+  .yt-mount iframe{
+    width:100%; height:100%;
+    border:0;
+    pointer-events:none; /* our own controls handle all interaction; the
+       iframe itself never receives clicks, which also keeps a tap from
+       ever landing on YouTube's own (unremovable) branding/logo hotspot */
+  }
+  .yt-loading{
     position:absolute; inset:0;
     display:flex; align-items:center; justify-content:center;
     color:rgba(236,193,139,.6);
     font-family:var(--font-display); font-style:italic; font-size:1.05rem;
     background:#000;
+    text-align:center;
+    padding:20px;
   }
+  .big-play-btn{
+    position:absolute;
+    top:50%; left:50%;
+    transform:translate(-50%,-50%);
+    width:74px; height:74px;
+    border-radius:50%;
+    background:rgba(2,1,0,.55);
+    border:1px solid var(--bronze);
+    color:var(--light-gold);
+    display:flex; align-items:center; justify-content:center;
+    z-index:20;
+    transition:transform .25s var(--ease), background .25s var(--ease);
+  }
+  .big-play-btn:hover{ background:rgba(126,17,11,.55); transform:translate(-50%,-50%) scale(1.06); }
+  .big-play-btn svg{ width:28px; height:28px; margin-left:4px; }
+  .buffer-spinner{
+    position:absolute; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    z-index:15;
+    pointer-events:none;
+  }
+  .buffer-spinner .spinner{
+    width:34px; height:34px;
+    border-width:3px;
+  }
+  /* Quiet, non-alarming indicator for ordinary tab-backgrounding — this is
+     NOT a security warning, just a normal "video paused because this tab
+     isn't on screen" state, and it clears itself automatically. */
+  .bg-pause-indicator{
+    position:absolute;
+    bottom:70px; left:50%;
+    transform:translateX(-50%);
+    z-index:25;
+    display:none;
+    align-items:center;
+    padding:8px 16px;
+    background:rgba(2,1,0,.7);
+    border:1px solid var(--dark-brown);
+    color:var(--light-gold);
+    font-size:.8rem;
+  }
+  /* Real fullscreen when the Fullscreen API is available; a CSS-only
+     fallback (fixed, full-viewport) for browsers that don't support
+     requestFullscreen on arbitrary elements — notably iOS Safari, which
+     only ever grants true native fullscreen to a plain <video> element. */
+  .video-stage.fake-fullscreen{
+    position:fixed; inset:0;
+    z-index:950;
+    max-height:100vh;
+    aspect-ratio:auto;
+  }
+  body.fake-fullscreen-lock{ overflow:hidden; }
   .watermark{
     position:absolute;
     top:10%; left:8%;
@@ -933,18 +998,29 @@
      focus, etc). See the JS section for what this can and can't catch. */
   .capture-shield{
     position:absolute; inset:0;
-    background:#000;
+    background:rgba(2,1,0,.97);
     z-index:60;
     display:none;
     align-items:center; justify-content:center;
     text-align:center;
     padding:24px;
-    color:rgba(236,193,139,.75);
-    font-family:var(--font-body);
-    font-size:.85rem;
-    line-height:1.5;
   }
   .capture-shield.show{ display:flex; }
+  .capture-shield .shield-inner{ max-width:360px; }
+  .capture-shield .shield-msg{
+    color:rgba(236,193,139,.85);
+    font-family:var(--font-body);
+    font-size:.9rem;
+    line-height:1.6;
+    margin-bottom:22px;
+  }
+  .capture-shield .shield-actions{
+    display:flex;
+    gap:12px;
+    justify-content:center;
+    flex-wrap:wrap;
+  }
+  .capture-shield .btn-sm{ padding:11px 20px; font-size:.85rem; }
 
   .player-controls{
     display:flex;
@@ -1209,27 +1285,66 @@
     </button>
   </div>
   <div class="video-stage" id="videoStage">
-    <div class="drive-frame-empty" id="playerEmpty">Loading video…</div>
-    <iframe id="playerFrame" class="drive-frame" title="Video player" allow="autoplay; fullscreen" allowfullscreen frameborder="0" referrerpolicy="no-referrer"
-      sandbox="allow-scripts allow-same-origin allow-forms"
-      style="display:none;"></iframe>
-    <!-- SECURITY: `sandbox` deliberately omits allow-popups,
-         allow-top-navigation(-by-user-activation) and allow-downloads.
-         Google Drive's own preview chrome includes an "open in new
-         window" icon and, on some file types, a download button — both
-         of which would hand a viewer the raw, unprotected drive.google.com
-         link. With this sandbox, the browser itself blocks those actions
-         from firing (they just silently do nothing); allow-scripts +
-         allow-same-origin is still enough for Drive's player to load and
-         play the video normally. This does NOT hide the iframe's src URL
-         from someone using devtools' Network tab — nothing running only
-         in the browser can fully hide a URL the browser itself has to
-         request — but it removes the one-click, no-technical-skill path
-         to that link, which is what was actually happening before. -->
+    <!-- The video is never uploaded to or served from this site: the
+         admin pastes a YouTube link in the dashboard, this page reads the
+         video id from a Firestore-gated private doc, and the YouTube
+         IFrame Player API mounts its own iframe here (see the JS section).
+         controls=0 hides YouTube's own scrubber/buttons/"watch on
+         YouTube" link so the bar below is the only visible control
+         surface, and the mounted iframe has pointer-events:none so a tap
+         can never land on YouTube's own (contractually un-removable)
+         logo. This is embed-level deterrence, not DRM — see the note by
+         the capture-deterrence code in the JS for what it can and can't
+         actually stop. -->
+    <div class="yt-loading" id="playerEmpty" data-i18n="video_loading">Loading video…</div>
+    <div class="yt-mount" id="ytMount"></div>
+    <button class="big-play-btn" id="bigPlayBtn" type="button" aria-label="Play" style="display:none;">
+      <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="7,4 21,12 7,20"/></svg>
+    </button>
+    <div class="buffer-spinner" id="bufferSpinner" style="display:none;"><span class="spinner"></span></div>
     <div class="watermark" id="watermark">
       Thyatira Team<br><span class="wm-viewer" id="watermarkViewer">Viewer: ————</span><br><span class="wm-session" id="watermarkSession"></span><br><span class="wm-session" id="watermarkClock"></span>
     </div>
-    <div class="capture-shield" id="captureShield" data-i18n="capture_shield_msg">Playback paused — this window isn't focused.</div>
+    <!-- Ordinary backgrounding (tab switched away) — quiet, self-clearing,
+         never blamed on the viewer. Kept visually distinct from the
+         capture-shield below on purpose, so a normal tap or app-switch
+         never reads as an accusation. -->
+    <div class="bg-pause-indicator" id="bgPauseIndicator" style="display:none;">
+      <span data-i18n="bg_paused_msg">Paused — this tab isn't active</span>
+    </div>
+    <!-- Genuine detected-event shield: only shown for things this page can
+         actually observe (a screenshot-shortcut keypress, or devtools
+         staying open for several seconds) — see capture-deterrence notes
+         in the JS. Requires an explicit tap to resume; never auto-resumes
+         on its own. -->
+    <div class="capture-shield" id="captureShield">
+      <div class="shield-inner">
+        <p class="shield-msg" id="captureShieldMsg" data-i18n="capture_kicked_msg">A screenshot/recording attempt was detected. Playback was stopped.</p>
+        <div class="shield-actions">
+          <button class="btn btn-primary btn-sm" type="button" id="resumePlaybackBtn" data-i18n="resume_playback">Resume Playback</button>
+          <button class="btn btn-outline btn-sm" type="button" id="shieldBackHomeBtn" data-i18n="btn_back_home">Back to Home</button>
+        </div>
+      </div>
+    </div>
+    <div class="player-controls" id="playerControls" style="display:none;">
+      <button class="ctrl-btn" type="button" id="ctrlPlayPause" aria-label="Play or pause">
+        <svg id="iconPlay" viewBox="0 0 24 24" fill="currentColor"><polygon points="6,4 20,12 6,20"/></svg>
+        <svg id="iconPause" viewBox="0 0 24 24" fill="currentColor" style="display:none;"><rect x="5" y="4" width="5" height="16"/><rect x="14" y="4" width="5" height="16"/></svg>
+      </button>
+      <div class="progress-wrap">
+        <span id="ctrlCurrentTime">0:00</span>
+        <input type="range" id="progressRange" min="0" max="1000" value="0" aria-label="Seek">
+        <span id="ctrlDuration">0:00</span>
+      </div>
+      <button class="ctrl-btn" type="button" id="ctrlMute" aria-label="Mute or unmute">
+        <svg id="iconVolume" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 9v6h4l5 4V5L8 9H4Z"/><path d="M16 9a4 4 0 0 1 0 6"/></svg>
+        <svg id="iconMuted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="display:none;"><path d="M4 9v6h4l5 4V5L8 9H4Z"/><line x1="16" y1="9" x2="21" y2="15"/><line x1="21" y1="9" x2="16" y2="15"/></svg>
+      </button>
+      <input type="range" id="volume-range" min="0" max="100" value="100" aria-label="Volume">
+      <button class="ctrl-btn" type="button" id="ctrlFullscreen" aria-label="Fullscreen">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+      </button>
+    </div>
   </div>
   <div class="video-info">
     <span class="season-tag" id="videoSeasonTag"></span>
@@ -1420,9 +1535,11 @@
       video_denied:"Access to this video was denied. Try re-entering your access code, or contact the admin if this keeps happening.",
       video_error:"This production is currently unavailable. Please try again shortly.",
       video_runtime:"Runtime: ",
-      capture_shield_msg:"Playback paused — this window isn't focused.",
-      capture_kicked_msg:"A screenshot/recording attempt was detected. Playback was stopped.",
+      bg_paused_msg:"Paused — this tab isn't active",
+      capture_kicked_msg:"A screenshot/recording shortcut was detected. Playback was stopped.",
       capture_kicked_devtools_msg:"Developer tools were detected while watching. Playback was stopped.",
+      resume_playback:"Resume Playback",
+      btn_back_home:"Back to Home",
       watermark_viewer_prefix:"Viewer: ", watermark_session_prefix:"Session: ",
       toast_season_unlocked_suffix:" — Season ", toast_video_open_failed:"Couldn't open this video. Try re-entering your access code.",
       status_msg_invalid:"That code isn't recognized. Double-check and try again.",
@@ -1480,9 +1597,11 @@
       video_denied:"تم رفض الوصول لهذا الفيديو. حاول إعادة إدخال كود الدخول، أو تواصل مع الإدارة إذا تكررت المشكلة.",
       video_error:"هذا العرض غير متاح حاليًا. برجاء المحاولة مرة أخرى بعد قليل.",
       video_runtime:"المدة: ",
-      capture_shield_msg:"تم إيقاف التشغيل مؤقتًا — هذه النافذة غير نشطة حاليًا.",
-      capture_kicked_msg:"تم رصد محاولة لقطة شاشة أو تسجيل. تم إيقاف التشغيل.",
+      bg_paused_msg:"تم الإيقاف مؤقتًا — هذه النافذة غير نشطة حاليًا",
+      capture_kicked_msg:"تم رصد اختصار لقطة شاشة أو تسجيل. تم إيقاف التشغيل.",
       capture_kicked_devtools_msg:"تم رصد فتح أدوات المطوّر أثناء المشاهدة. تم إيقاف التشغيل.",
+      resume_playback:"استئناف التشغيل",
+      btn_back_home:"العودة للرئيسية",
       watermark_viewer_prefix:"المشاهد: ", watermark_session_prefix:"الجلسة: ",
       toast_season_unlocked_suffix:" — الموسم ", toast_video_open_failed:"تعذّر فتح هذا الفيديو. حاول إعادة إدخال كود الدخول.",
       status_msg_invalid:"هذا الكود غير معروف. تأكد منه وحاول مرة أخرى.",
@@ -1983,135 +2102,345 @@
 
   /* ===================== VIDEO VIEWER =====================
      The video is never uploaded to or served from this site. The admin
-     pastes a Google Drive share link in the dashboard; this page reads
-     the Drive file id straight from Firestore (only once a valid
+     pastes a YouTube link in the dashboard; this page reads the video id
+     straight from a private Firestore subcollection (only once a valid
      session exists for this production's season — see firestore.rules)
-     and embeds Drive's own player for that id in an iframe, right here
-     inside the themed stage. It always plays in place; it never opens
-     in a new tab. Play/seek/volume/fullscreen are Drive's own controls
-     inside the iframe — this page doesn't reimplement them. */
+     and mounts YouTube's IFrame Player API for that id right here inside
+     the themed stage. It always plays in place; it never opens a new tab
+     on its own. YouTube's own chrome is hidden (controls:0 in playerVars)
+     and the mounted iframe has pointer-events:none, so every visible
+     control — play/pause, seek, volume, fullscreen — is this page's own
+     themed UI calling the Player API, not YouTube's UI. */
   var videoOverlay = qs("#videoOverlay");
-  var playerFrame = qs("#playerFrame");
   var playerEmpty = qs("#playerEmpty");
+  var ytMountEl = qs("#ytMount");
+  var bigPlayBtn = qs("#bigPlayBtn");
+  var bufferSpinner = qs("#bufferSpinner");
+  var playerControls = qs("#playerControls");
+  var ctrlPlayPause = qs("#ctrlPlayPause");
+  var iconPlay = qs("#iconPlay");
+  var iconPause = qs("#iconPause");
+  var progressRange = qs("#progressRange");
+  var ctrlCurrentTime = qs("#ctrlCurrentTime");
+  var ctrlDuration = qs("#ctrlDuration");
+  var ctrlMute = qs("#ctrlMute");
+  var iconVolume = qs("#iconVolume");
+  var iconMuted = qs("#iconMuted");
+  var volumeRange = qs("#volume-range");
+  var ctrlFullscreen = qs("#ctrlFullscreen");
   var watermarkEl = qs("#watermark");
   var watermarkTimer = null;
   var watermarkClockTimer = null;
 
+  var ytPlayer = null;              // the single reused YT.Player instance
+  var ytApiPromise = null;
+  var progressPollTimer = null;
+  var isUserSeeking = false;
+  var lastKnownVolume = 100;
+
+  /* Loads the YouTube IFrame API script once and resolves with window.YT.
+     No API key required — that's only needed for the separate YouTube
+     Data API (search, channel listings, etc.), which this page never
+     calls. The IFrame Player API is free, key-less, client-side only. */
+  function loadYouTubeAPI(){
+    if (ytApiPromise) return ytApiPromise;
+    ytApiPromise = new Promise(function(resolve){
+      if (window.YT && window.YT.Player){ resolve(window.YT); return; }
+      var previous = window.onYouTubeIframeAPIReady;
+      window.onYouTubeIframeAPIReady = function(){
+        if (typeof previous === "function") previous();
+        resolve(window.YT);
+      };
+      var tag = document.createElement("script");
+      tag.src = "https://www.youtube.com/iframe_api";
+      document.head.appendChild(tag);
+    });
+    return ytApiPromise;
+  }
+
+  function fmtTime(sec){
+    sec = Math.max(0, Math.floor(sec || 0));
+    var h = Math.floor(sec / 3600);
+    var m = Math.floor((sec % 3600) / 60);
+    var s = sec % 60;
+    var mm = (h > 0 && m < 10) ? "0" + m : String(m);
+    var ss = s < 10 ? "0" + s : String(s);
+    return h > 0 ? (h + ":" + mm + ":" + ss) : (m + ":" + ss);
+  }
+
+  function setPlayIcon(isPlaying){
+    iconPlay.style.display = isPlaying ? "none" : "block";
+    iconPause.style.display = isPlaying ? "block" : "none";
+  }
+  function updateMuteIcon(){
+    if (!ytPlayer || typeof ytPlayer.isMuted !== "function") return;
+    var muted = ytPlayer.isMuted();
+    iconVolume.style.display = muted ? "none" : "block";
+    iconMuted.style.display = muted ? "block" : "none";
+    volumeRange.value = muted ? 0 : ytPlayer.getVolume();
+  }
+  function updateDurationDisplay(){
+    if (!ytPlayer || typeof ytPlayer.getDuration !== "function") return;
+    ctrlDuration.textContent = fmtTime(ytPlayer.getDuration());
+  }
+
+  function startProgressPoll(){
+    stopProgressPoll();
+    progressPollTimer = setInterval(function(){
+      if (!ytPlayer || isUserSeeking) return;
+      var dur = ytPlayer.getDuration() || 0;
+      var cur = ytPlayer.getCurrentTime() || 0;
+      if (dur > 0) progressRange.value = Math.round((cur / dur) * 1000);
+      ctrlCurrentTime.textContent = fmtTime(cur);
+      ctrlDuration.textContent = fmtTime(dur);
+    }, 250);
+  }
+  function stopProgressPoll(){ clearInterval(progressPollTimer); progressPollTimer = null; }
+
+  function onPlayerStateChange(e){
+    var S = window.YT.PlayerState;
+    if (e.data === S.PLAYING){
+      bufferSpinner.style.display = "none";
+      bigPlayBtn.style.display = "none";
+      setPlayIcon(true);
+      startProgressPoll();
+    } else if (e.data === S.PAUSED){
+      bufferSpinner.style.display = "none";
+      setPlayIcon(false);
+      stopProgressPoll();
+    } else if (e.data === S.BUFFERING){
+      bigPlayBtn.style.display = "none";
+      bufferSpinner.style.display = "flex";
+    } else if (e.data === S.ENDED){
+      bufferSpinner.style.display = "none";
+      setPlayIcon(false);
+      stopProgressPoll();
+      bigPlayBtn.style.display = "flex";
+    } else if (e.data === S.CUED){
+      bufferSpinner.style.display = "none";
+      playerEmpty.style.display = "none";
+      playerControls.style.display = "flex";
+      bigPlayBtn.style.display = "flex";
+      updateDurationDisplay();
+      updateMuteIcon();
+    }
+  }
+  function onPlayerError(e){
+    console.error("YouTube player error:", e && e.data);
+    playerControls.style.display = "none";
+    bigPlayBtn.style.display = "none";
+    bufferSpinner.style.display = "none";
+    playerEmpty.style.display = "flex";
+    playerEmpty.textContent = t("video_error");
+  }
+
+  /* Creates the YT.Player once and reuses it for every subsequent video —
+     loadVideoById() swaps the video without tearing down and rebuilding
+     the iframe each time, which is both faster and avoids a class of
+     mobile-autoplay-policy re-triggers that a fresh iframe can hit. */
+  function mountPlayer(videoId){
+    return loadYouTubeAPI().then(function(YT){
+      return new Promise(function(resolve, reject){
+        if (ytPlayer && typeof ytPlayer.loadVideoById === "function"){
+          ytPlayer.loadVideoById(videoId);
+          resolve(ytPlayer);
+          return;
+        }
+        var mountTarget = document.createElement("div");
+        ytMountEl.innerHTML = "";
+        ytMountEl.appendChild(mountTarget);
+        try {
+          ytPlayer = new YT.Player(mountTarget, {
+            videoId: videoId,
+            host: "https://www.youtube-nocookie.com", // privacy-enhanced embed mode
+            playerVars: {
+              autoplay: 0,           // never autoplay — see openVideo(): a
+                                      // visible "big play" button always
+                                      // starts it, which is also what makes
+                                      // playback reliable on iOS/Android
+                                      // (mobile browsers block unsolicited
+                                      // autoplay; a direct tap does not)
+              controls: 0,           // hide YouTube's own control bar
+              disablekb: 1,
+              fs: 0,                 // hide YouTube's native fullscreen
+                                      // button — this page's own
+                                      // fullscreen button is used instead
+              iv_load_policy: 3,     // no annotations
+              modestbranding: 1,
+              playsinline: 1,        // REQUIRED for iOS Safari: without
+                                      // this, iOS forces the video into
+                                      // its own native fullscreen player
+                                      // the instant it plays, which is
+                                      // exactly the "stuck" behavior this
+                                      // fix addresses
+              rel: 0,                // no related-video suggestions
+              origin: window.location.origin
+            },
+            events: {
+              onReady: function(){ updateMuteIcon(); resolve(ytPlayer); },
+              onStateChange: onPlayerStateChange,
+              onError: function(e){ onPlayerError(e); reject(e); }
+            }
+          });
+        } catch(err){ reject(err); }
+      });
+    });
+  }
+
   /* ===================== CAPTURE DETERRENCE =====================
-     Blacks out the video the instant this tab/window loses focus or is
-     hidden — covering things like alt-tabbing to a separate recorder/
-     capture-card app, another window grabbing focus, or a browser
-     screen-share picker. It's driven by the admin's "Screen Capture
-     Deterrence" toggle in the dashboard (see securitySettings above).
+     Two clearly separate behaviors, driven by the admin's "Screen Capture
+     Deterrence" toggle (see securitySettings above):
 
-     IMPORTANT LIMITATION, honestly stated: this can NOT detect a phone's
-     built-in screen recorder (iOS Control Center / Android Quick
-     Settings) or most desktop OS-level recorders. Those record the
-     screen without the browser ever losing focus or visibility, and
-     there is no web API that exposes "the OS is recording this screen"
-     to a page — no site can see that state. The only real protection
-     against that is DRM (e.g. Widevine L1) enforced by the OS/browser
-     video pipeline itself, which requires a licensed DRM streaming
-     backend and isn't compatible with a plain Google Drive iframe embed.
-     This feature is a genuine deterrent for casual window-capture, not a
-     guarantee against phone screen recording. */
+     1) Ordinary tab-backgrounding (document.hidden === true — the tab is
+        genuinely not the one on screen). This just pauses playback and
+        shows a quiet, non-accusatory indicator; it clears itself and
+        resumes automatically the moment the tab is visible again. This is
+        NOT a security event — it's the same thing YouTube/Netflix/etc. do
+        when you switch away, and it should never feel like a warning.
+
+        Deliberately NOT used for this: plain `window blur`. A YouTube
+        iframe legitimately takes keyboard/pointer focus the instant a
+        viewer taps inside it, which fires `blur` on the parent window
+        even though the tab is still the one on screen — that mismatch
+        was the actual cause of the shield firing on ordinary taps.
+        document.hidden is the only signal here that reliably means "this
+        tab left the screen."
+
+     2) Genuinely detected events — a screenshot-shortcut keypress, or
+        devtools staying open for several seconds straight (desktop only;
+        skipped entirely on touch devices, since a mobile browser's own
+        address-bar show/hide changes window dimensions in exactly the
+        way the devtools heuristic looks for, which was the other source
+        of false positives). These pause playback and show the real
+        capture-shield with an explicit "Resume Playback" / "Back to
+        Home" choice — it never auto-resumes on its own, since a genuine
+        detection is worth requiring a deliberate tap to clear.
+
+     HONEST LIMITATION, stated plainly: neither of these can detect a
+     phone's built-in screen recorder (iOS Control Center / Android Quick
+     Settings) or most desktop OS-level recorders — those capture the
+     screen without the browser ever losing focus, visibility, or
+     changing size, and no web API exposes "the OS is recording this
+     screen" to a page. The only real protection against that is DRM
+     (e.g. Widevine L1) enforced by the OS/browser video pipeline itself,
+     which needs a licensed DRM streaming backend and isn't something a
+     YouTube iframe embed (or any consumer video embed) provides. This is
+     a genuine deterrent for casual capture attempts, not a guarantee. */
   var captureShield = qs("#captureShield");
+  var captureShieldMsg = qs("#captureShieldMsg");
+  var resumePlaybackBtn = qs("#resumePlaybackBtn");
+  var shieldBackHomeBtn = qs("#shieldBackHomeBtn");
+  var bgPauseIndicator = qs("#bgPauseIndicator");
   var captureCheckTimer = null;
+  var devtoolsSuspectStreak = 0;
   var devtoolsOpen = false;
-  var devtoolsOpenSince = null;
+  var securityHoldActive = false;   // true only for genuinely detected events
+  var autoPausedByVisibility = false;
+  var DEVTOOLS_STREAK_NEEDED = 3;   // ~3 consecutive seconds before acting
+  var isTouchDevice = ("ontouchstart" in window) || (navigator.maxTouchPoints > 0);
 
-  function shieldVideo(){
+  function showBackgroundPause(){
     if(!securitySettings.captureDeterrence) return;
     if(!videoOverlay.classList.contains("open")) return;
+    if(securityHoldActive) return; // real shield already showing; don't layer the quiet one on top
+    if(ytPlayer && typeof ytPlayer.getPlayerState === "function" && window.YT && ytPlayer.getPlayerState() === window.YT.PlayerState.PLAYING){
+      ytPlayer.pauseVideo();
+      autoPausedByVisibility = true;
+    }
+    bgPauseIndicator.style.display = "flex";
+  }
+  function clearBackgroundPause(){
+    bgPauseIndicator.style.display = "none";
+    if(autoPausedByVisibility && !securityHoldActive && ytPlayer && typeof ytPlayer.playVideo === "function"){
+      ytPlayer.playVideo();
+    }
+    autoPausedByVisibility = false;
+  }
+  document.addEventListener("visibilitychange", function(){
+    if(document.hidden) showBackgroundPause(); else clearBackgroundPause();
+  });
+
+  function triggerSecurityHold(messageKey){
+    if(!securitySettings.captureDeterrence) return;
+    if(!videoOverlay.classList.contains("open")) return;
+    securityHoldActive = true;
+    bgPauseIndicator.style.display = "none";
+    if(ytPlayer && typeof ytPlayer.pauseVideo === "function") ytPlayer.pauseVideo();
+    captureShieldMsg.textContent = t(messageKey);
     captureShield.classList.add("show");
   }
-  function unshieldVideo(){
-    if(devtoolsOpen) return; // stay shielded until devtools actually closes
+  function clearSecurityHold(){
+    securityHoldActive = false;
     captureShield.classList.remove("show");
   }
-
-  /* Kicks the viewer straight out of the video and back to the homepage —
-     used for deliberate, unambiguous capture attempts (a screenshot
-     shortcut, or devtools opened while watching). A soft, self-clearing
-     shield isn't enough here: the previous version blanked the video for
-     the moment of the shortcut and then quietly let playback continue,
-     which meant a viewer could just try again seconds later — so instead
-     these end the session outright and send them back to Home. */
-  function kickToHome(reasonKey){
+  resumePlaybackBtn.addEventListener("click", function(){
+    clearSecurityHold();
+    if(ytPlayer && typeof ytPlayer.playVideo === "function") ytPlayer.playVideo();
+  });
+  shieldBackHomeBtn.addEventListener("click", function(){
     closeVideo();
     currentOpenSeasonId = null;
     seasonViewSection.classList.remove("open");
     qs("#home").scrollIntoView({ behavior:"smooth", block:"start" });
-    showToast(t(reasonKey || "capture_kicked_msg"), "error");
-  }
-
-  document.addEventListener("visibilitychange", function(){
-    if(document.hidden) shieldVideo(); else unshieldVideo();
   });
-  window.addEventListener("blur", shieldVideo);
-  window.addEventListener("focus", unshieldVideo);
 
-  /* DevTools open detector (desktop browsers only): once the panel is
-     docked, the browser's outer chrome grows relative to the viewport by
-     a lot more than any normal toolbar/zoom does. Not foolproof — someone
-     can undock devtools to a separate window and this won't see it — but
-     it catches the common case of someone opening the console to poke at
-     the page or grab the raw Drive iframe URL. Opening devtools while a
-     video is playing is deliberate, so this is a hard kick, not a soft
-     shield. */
+  /* DevTools open detector (desktop only — see the note above on why
+     touch devices are excluded). Requires the size gap to persist across
+     several consecutive checks before acting, so a one-off window resize
+     or a momentary layout shift never triggers it by itself. */
   function checkDevtools(){
+    if(isTouchDevice){ devtoolsSuspectStreak = 0; devtoolsOpen = false; return; }
     var widthGap = window.outerWidth - window.innerWidth;
     var heightGap = window.outerHeight - window.innerHeight;
-    var isOpen = widthGap > 160 || heightGap > 160;
-    if(isOpen){
-      if(!devtoolsOpenSince) devtoolsOpenSince = Date.now();
-      devtoolsOpen = true;
-      shieldVideo();
-      if(videoOverlay.classList.contains("open")){
-        kickToHome("capture_kicked_devtools_msg");
-      }
+    var suspect = widthGap > 200 || heightGap > 200;
+    if(suspect){
+      devtoolsSuspectStreak++;
     } else {
-      devtoolsOpenSince = null;
+      devtoolsSuspectStreak = 0;
       devtoolsOpen = false;
+    }
+    if(devtoolsSuspectStreak >= DEVTOOLS_STREAK_NEEDED && !devtoolsOpen){
+      devtoolsOpen = true;
+      triggerSecurityHold("capture_kicked_devtools_msg");
     }
   }
 
-  // Fallback poll — some mobile browsers don't fire blur/visibilitychange
-  // reliably when a system overlay (share sheet, app switcher) appears,
-  // and devtools detection needs polling regardless.
   function startCaptureCheck(){
     stopCaptureCheck();
-    captureCheckTimer = setInterval(function(){
-      checkDevtools();
-      if(!document.hasFocus() || document.hidden) shieldVideo();
-    }, 1000);
+    devtoolsSuspectStreak = 0;
+    devtoolsOpen = false;
+    captureCheckTimer = setInterval(checkDevtools, 1000);
   }
   function stopCaptureCheck(){
     clearInterval(captureCheckTimer);
     captureCheckTimer = null;
+    devtoolsSuspectStreak = 0;
     devtoolsOpen = false;
-    devtoolsOpenSince = null;
   }
 
   /* Best-effort screenshot-key interception (desktop only). The OS has
      usually already captured the frame by the time this fires — a
-     webpage cannot truly block a system-level screenshot — so blanking
-     the frame only makes the capture itself mostly useless. What we CAN
-     control is what happens next: rather than quietly resuming playback
-     (which just invites another attempt seconds later), a detected
-     attempt now ends the session and sends the viewer back to Home. */
+     webpage cannot truly block a system-level screenshot — so this isn't
+     about preventing the capture itself. It's about what happens next:
+     pause, show the real shield, and require a deliberate "Resume
+     Playback" tap rather than silently continuing (which would just
+     invite another attempt) or silently ending the session (which is
+     what caused it to look like ordinary use was being punished). */
   document.addEventListener("keyup", function(e){
+    if(!videoOverlay.classList.contains("open")) return;
     var isPrintScreen = e.key === "PrintScreen";
     var isMacShot = e.metaKey && e.shiftKey && ["3","4","5"].indexOf(e.key) !== -1;
-    var isWinSnip = e.key === "S" && e.shiftKey && (e.metaKey || e.getModifierState && e.getModifierState("Meta"));
-    if((isPrintScreen || isMacShot || isWinSnip) && videoOverlay.classList.contains("open")){
-      shieldVideo();
-      kickToHome("capture_kicked_msg");
+    var isWinSnip = (e.key === "S" || e.key === "s") && e.shiftKey && (e.metaKey || (e.getModifierState && e.getModifierState("Meta")));
+    if(isPrintScreen || isMacShot || isWinSnip){
+      triggerSecurityHold("capture_kicked_msg");
     }
   });
 
   function applySecuritySettings(){
-    if(!securitySettings.captureDeterrence) unshieldVideo();
+    if(!securitySettings.captureDeterrence){
+      bgPauseIndicator.style.display = "none";
+      clearSecurityHold();
+    }
   }
 
   qs("#watermarkViewer").textContent = t("watermark_viewer_prefix") + (viewerLabel || "————");
@@ -2131,17 +2460,23 @@
   }
 
   function openVideo(season, production){
-    unshieldVideo();
+    clearSecurityHold();
+    bgPauseIndicator.style.display = "none";
+    autoPausedByVisibility = false;
     startCaptureCheck();
     qs("#videoSeasonTag").textContent = t("season_word") + " " + season.number + " — " + season.name;
     qs("#videoTitle").textContent = production.title;
     qs("#videoDesc").textContent = production.desc || "";
     qs("#videoDuration").textContent = production.duration ? (t("video_runtime") + production.duration) : "";
 
-    playerFrame.style.display = "none";
-    playerFrame.src = "about:blank";
+    playerControls.style.display = "none";
+    bigPlayBtn.style.display = "none";
+    bufferSpinner.style.display = "none";
     playerEmpty.style.display = "flex";
     playerEmpty.textContent = t("video_loading");
+    progressRange.value = 0;
+    ctrlCurrentTime.textContent = "0:00";
+    ctrlDuration.textContent = "0:00";
     videoOverlay.classList.add("open");
     document.body.style.overflow = "hidden";
 
@@ -2154,26 +2489,36 @@
       .then(function(){
         // Rules only allow this read once a matching, non-expired
         // session doc exists for this signed-in visitor and this
-        // production's season — see firestore.rules.
+        // production's season — see firestore.rules. The field read here
+        // is `youtubeId`, written by the dashboard's YouTube Video Link
+        // field (see dashboard.html) — nothing Drive-related is read or
+        // written anywhere in this app anymore.
         return db.collection("productions").doc(production.id).collection("private").doc("media").get();
       })
       .then(function(doc){
-        if (!doc.exists || !doc.data().driveId){
+        if (!doc.exists || !doc.data().youtubeId){
           playerEmpty.textContent = t("video_unavailable");
           return;
         }
-        var driveId = doc.data().driveId;
-        playerFrame.src = "https://drive.google.com/file/d/" + driveId + "/preview";
-        playerFrame.style.display = "block";
-        playerEmpty.style.display = "none";
+        return mountPlayer(doc.data().youtubeId).then(function(){
+          playerEmpty.style.display = "none";
+          playerControls.style.display = "flex";
+          // Always require an explicit tap to start, on every device.
+          // This is what makes playback reliable on iOS Safari and
+          // Android Chrome: both block unsolicited autoplay, but a
+          // player.playVideo() call made directly inside a click/tap
+          // handler (see bigPlayBtn's listener below) always counts as a
+          // real user gesture and always works.
+          bigPlayBtn.style.display = "flex";
 
-        moveWatermark();
-        clearInterval(watermarkTimer);
-        watermarkTimer = setInterval(moveWatermark, 6000);
-        clearInterval(watermarkClockTimer);
-        watermarkClockTimer = setInterval(function(){
-          if(watermarkClockEl) watermarkClockEl.textContent = new Date().toLocaleTimeString();
-        }, 1000);
+          moveWatermark();
+          clearInterval(watermarkTimer);
+          watermarkTimer = setInterval(moveWatermark, 6000);
+          clearInterval(watermarkClockTimer);
+          watermarkClockTimer = setInterval(function(){
+            if(watermarkClockEl) watermarkClockEl.textContent = new Date().toLocaleTimeString();
+          }, 1000);
+        });
       })
       .catch(function(err){
         // DIAGNOSTIC: same idea as verifyCode — log the real Firestore
@@ -2187,21 +2532,96 @@
         } else {
           playerEmpty.textContent = t("video_error");
         }
+        playerEmpty.style.display = "flex";
         showToast(t("toast_video_open_failed"), "error");
       });
   }
 
+  function exitAnyFullscreen(){
+    if (document.fullscreenElement || document.webkitFullscreenElement){
+      if (document.exitFullscreen) document.exitFullscreen().catch(function(){});
+      else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+    }
+    qs("#videoStage").classList.remove("fake-fullscreen");
+    document.body.classList.remove("fake-fullscreen-lock");
+  }
+
   function closeVideo(){
-    playerFrame.src = "about:blank";
-    playerFrame.style.display = "none";
+    if (ytPlayer && typeof ytPlayer.stopVideo === "function"){
+      try { ytPlayer.stopVideo(); } catch(e){}
+    }
+    stopProgressPoll();
     videoOverlay.classList.remove("open");
     document.body.style.overflow = "";
     clearInterval(watermarkTimer);
     clearInterval(watermarkClockTimer);
     stopCaptureCheck();
-    unshieldVideo();
+    clearSecurityHold();
+    bgPauseIndicator.style.display = "none";
+    autoPausedByVisibility = false;
+    exitAnyFullscreen();
   }
   qs("#closeVideo").addEventListener("click", closeVideo);
+
+  /* ===================== CUSTOM CONTROL BAR =====================
+     Wired once at load; the same bar and the same ytPlayer instance are
+     reused for every production the viewer opens. */
+  ctrlPlayPause.addEventListener("click", function(){
+    if (!ytPlayer || !window.YT) return;
+    if (ytPlayer.getPlayerState() === window.YT.PlayerState.PLAYING) ytPlayer.pauseVideo();
+    else ytPlayer.playVideo();
+  });
+  bigPlayBtn.addEventListener("click", function(){
+    // Deliberately calls playVideo() synchronously inside this click
+    // handler (no async work in between) — that's what mobile browsers'
+    // autoplay policies require to treat it as a genuine user gesture.
+    if (ytPlayer && typeof ytPlayer.playVideo === "function") ytPlayer.playVideo();
+  });
+  progressRange.addEventListener("input", function(){ isUserSeeking = true; });
+  progressRange.addEventListener("change", function(){
+    if (!ytPlayer){ isUserSeeking = false; return; }
+    var dur = ytPlayer.getDuration() || 0;
+    ytPlayer.seekTo((progressRange.value / 1000) * dur, true);
+    isUserSeeking = false;
+  });
+  ctrlMute.addEventListener("click", function(){
+    if (!ytPlayer) return;
+    if (ytPlayer.isMuted()){ ytPlayer.unMute(); ytPlayer.setVolume(lastKnownVolume || 100); }
+    else { lastKnownVolume = ytPlayer.getVolume() || 100; ytPlayer.mute(); }
+    updateMuteIcon();
+  });
+  volumeRange.addEventListener("input", function(){
+    if (!ytPlayer) return;
+    var v = parseInt(volumeRange.value, 10) || 0;
+    ytPlayer.setVolume(v);
+    if (v === 0) ytPlayer.mute(); else if (ytPlayer.isMuted()) ytPlayer.unMute();
+    updateMuteIcon();
+  });
+
+  /* Real Fullscreen API when the browser supports it on an arbitrary
+     element; a CSS-only "expand to viewport" fallback otherwise. iOS
+     Safari in particular has no Fullscreen API for non-<video> elements
+     in most versions, so the fallback is what actually runs there — it
+     isn't true OS fullscreen (status bar etc. may remain), but it fills
+     the screen and orientation changes are handled by the existing
+     responsive/aspect-ratio CSS either way. */
+  ctrlFullscreen.addEventListener("click", function(){
+    var stage = qs("#videoStage");
+    var isFs = document.fullscreenElement || document.webkitFullscreenElement || stage.classList.contains("fake-fullscreen");
+    if (!isFs){
+      if (stage.requestFullscreen) stage.requestFullscreen().catch(function(){
+        stage.classList.add("fake-fullscreen");
+        document.body.classList.add("fake-fullscreen-lock");
+      });
+      else if (stage.webkitRequestFullscreen) stage.webkitRequestFullscreen();
+      else {
+        stage.classList.add("fake-fullscreen");
+        document.body.classList.add("fake-fullscreen-lock");
+      }
+    } else {
+      exitAnyFullscreen();
+    }
+  });
 
   /* ===================== KEYBOARD / ESC ===================== */
   document.addEventListener("keydown", function(e){
