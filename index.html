@@ -913,6 +913,15 @@
     border-bottom:1px solid var(--dark-brown);
   }
   .video-topbar .back-link{ margin:0; }
+  .protection-badge{
+    margin-left:auto;
+    display:flex; align-items:center; gap:7px;
+    font-size:.72rem; letter-spacing:.03em;
+    color: var(--bronze);
+    border:1px solid var(--dark-brown);
+    padding:6px 12px;
+    opacity:.9;
+  }
   .video-stage{
     position:relative;
     width:100%;
@@ -1338,6 +1347,17 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
       <span data-i18n="back">Back</span>
     </button>
+    <!-- Only ever shown when this page is running inside the optional
+         Electron wrapper AND win.setContentProtection(true) is active for
+         the current video (see updateProtectionBadge() below). In a
+         normal browser tab this stays hidden — a browser tab cannot
+         enable OS-level content protection, and this badge never claims
+         otherwise. See electron/main.js for what setContentProtection
+         actually does and doesn't guarantee on Windows. -->
+    <span id="protectionBadge" class="protection-badge" style="display:none;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="13" height="13"><path d="M12 3 4.5 6v6c0 4.5 3.2 7.9 7.5 9 4.3-1.1 7.5-4.5 7.5-9V6L12 3Z"/></svg>
+      <span data-i18n="protection_badge">Windows Content Protection Active</span>
+    </span>
   </div>
   <div class="video-stage" id="videoStage">
     <!-- The video is never uploaded to or served from this site: the
@@ -1556,6 +1576,7 @@
       seasons_title:"Seasons",
       seasons_sub:"Each season gathers a handful of productions staged and filmed for the Thyatira Team viewer.",
       back_to_seasons:"Back to Seasons", back:"Back",
+      protection_badge:"Windows Content Protection Active",
       about_title:"About Thyatira Team",
       about_p1:"Thyatira Team is a theater group that writes, rehearses, and stages original productions, then brings them to a wider audience through this viewer. Every season is filmed and produced with the same care given to the performance itself.",
       about_p2:"This site exists so the people who support the team can watch from anywhere — a season pass and an access code stand in for a seat in the room.",
@@ -1618,6 +1639,7 @@
       seasons_title:"المواسم",
       seasons_sub:"كل موسم يضم مجموعة من العروض التي تم تصويرها خصيصًا لمشاهدي فريق ثياتيرا.",
       back_to_seasons:"العودة إلى المواسم", back:"رجوع",
+      protection_badge:"حماية المحتوى الخاصة بويندوز نشطة",
       about_title:"عن فريق ثياتيرا",
       about_p1:"فريق ثياتيرا فرقة مسرحية تكتب وتتدرب وتقدّم عروضًا مسرحية أصلية، ثم تصلها لجمهور أوسع من خلال هذه المنصة. كل موسم يتم تصويره وإنتاجه بنفس العناية التي يُقدَّم بها العرض نفسه.",
       about_p2:"هذا الموقع موجود ليتيح لمن يدعمون الفريق المشاهدة من أي مكان — كود الدخول هو بمثابة مقعدك في الصالة.",
@@ -2252,6 +2274,44 @@
   }
   function stopProgressPoll(){ clearInterval(progressPollTimer); progressPollTimer = null; }
 
+  /* ===================== ELECTRON BRIDGE (optional) =====================
+     This page runs unmodified in a normal browser tab — nothing below
+     does anything there, since window.electronAPI simply doesn't exist.
+     When the SAME index.html is instead loaded inside the optional
+     Electron wrapper (see /electron), preload.js exposes a minimal,
+     read-only-feeling API via contextBridge: window.electronAPI.setVideoProtection(bool).
+     That maps directly to win.setContentProtection(bool) in the Electron
+     main process, which is real Windows-level protection (see the
+     honest breakdown of what it does/doesn't cover in electron/main.js
+     and electron/README.md) — categorically different from anything a
+     browser tab itself can offer, which is why the badge above only
+     ever appears in the Electron build. Protection is enabled only
+     while a video is actually PLAYING and disabled the instant it
+     pauses, ends, or the viewer is closed — never left on idle. */
+  function setElectronVideoProtection(enabled){
+    if (window.electronAPI && typeof window.electronAPI.setVideoProtection === "function"){
+      window.electronAPI.setVideoProtection(enabled)
+        .then(function(confirmedOn){
+          // The main process confirms whether setContentProtection(true)
+          // was actually applied (it can fail, e.g. on an unsupported
+          // OS/GPU driver combo) — see electron/main.js. It does NOT try
+          // to report which underlying Windows affinity flag got used;
+          // Electron doesn't expose that back to the renderer, so this
+          // badge intentionally makes no claim more specific than "on".
+          updateProtectionBadge(Boolean(confirmedOn));
+        })
+        .catch(function(err){
+          console.error("Electron content protection call failed:", err);
+          updateProtectionBadge(false);
+        });
+    }
+  }
+  function updateProtectionBadge(active){
+    var badge = qs("#protectionBadge");
+    if (!badge) return;
+    badge.style.display = (window.electronAPI && active) ? "flex" : "none";
+  }
+
   function onPlayerStateChange(e){
     var S = window.YT.PlayerState;
     if (e.data === S.PLAYING){
@@ -2260,11 +2320,13 @@
       setPlayIcon(true);
       startProgressPoll();
       protectedModeActive = true; // enter Protected Video Mode
+      setElectronVideoProtection(true);
     } else if (e.data === S.PAUSED){
       bufferSpinner.style.display = "none";
       setPlayIcon(false);
       stopProgressPoll();
       protectedModeActive = false; // leave Protected Video Mode — normal keyboard behavior resumes
+      setElectronVideoProtection(false);
     } else if (e.data === S.BUFFERING){
       bigPlayBtn.style.display = "none";
       bufferSpinner.style.display = "flex";
@@ -2274,6 +2336,7 @@
       stopProgressPoll();
       bigPlayBtn.style.display = "flex";
       protectedModeActive = false;
+      setElectronVideoProtection(false);
     } else if (e.data === S.CUED){
       bufferSpinner.style.display = "none";
       playerEmpty.style.display = "none";
@@ -2705,6 +2768,7 @@
     qs("#videoStage").classList.remove("protected-blur");
     autoPausedByVisibility = false;
     protectedModeActive = false; // leaving the viewer always exits Protected Video Mode
+    setElectronVideoProtection(false); // safety net if closed mid-playback
     exitAnyFullscreen();
   }
   qs("#closeVideo").addEventListener("click", closeVideo);
